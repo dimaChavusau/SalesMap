@@ -371,6 +371,10 @@ export default class SalesMapContainerLwc extends LightningElement {
 
     handleSearch() {
         this.performSearch();
+        // Close filter panel after search on mobile/tablet
+        if (window.innerWidth < 1080) {
+            this.filterPanelOpen = false;
+        }
     }
 
     handleReset() {
