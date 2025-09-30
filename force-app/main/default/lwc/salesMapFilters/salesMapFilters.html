@@ -83,7 +83,7 @@
                 </div>
             </div>
 
-            <!-- Territories -->
+            <!-- Territories - exactly like old Aura -->
             <div class="filter-group">
                 <div class="filter-header">
                     <lightning-icon icon-name="standard:service_territory" size="x-small" class="filter-icon"></lightning-icon>
@@ -93,15 +93,15 @@
                     <c-multi-select-lookup-lwc
                         object-api-name="Territory__c"
                         icon-name="standard:service_territory"
-                        selected-records={selectedTerritories}
+                        label="Territories"
                         fields="Code__c"
-                        conditions={territoryConditions}
+                        conditions="isActive__c = true"
                         onselectchange={handleTerritoryChange}>
                     </c-multi-select-lookup-lwc>
                 </div>
             </div>
 
-            <!-- Trainers -->
+            <!-- Trainers - exactly like old Aura -->
             <div class="filter-group">
                 <div class="filter-header">
                     <lightning-icon icon-name="standard:user" size="x-small" class="filter-icon"></lightning-icon>
@@ -111,14 +111,14 @@
                     <c-multi-select-lookup-lwc
                         object-api-name="User"
                         icon-name="standard:user"
-                        selected-records={selectedTrainers}
-                        conditions={trainerConditions}
+                        label="Trainers"
+                        conditions="IsActive = true AND Sivantos_Department_del__c = 'Audiology Trainer'"
                         onselectchange={handleTrainerChange}>
                     </c-multi-select-lookup-lwc>
                 </div>
             </div>
 
-            <!-- Campaigns -->
+            <!-- Campaigns - exactly like old Aura -->
             <div class="filter-group">
                 <div class="filter-header">
                     <lightning-icon icon-name="standard:campaign" size="x-small" class="filter-icon"></lightning-icon>
@@ -128,34 +128,13 @@
                     <c-multi-select-lookup-lwc
                         object-api-name="Campaign"
                         icon-name="standard:campaign"
-                        selected-records={selectedCampaigns}
+                        label="Campaigns"
                         onselectchange={handleCampaignChange}>
                     </c-multi-select-lookup-lwc>
                 </div>
             </div>
 
-            <!-- Brands (US Only) -->
-            <template if:true={showBrands}>
-                <div class="filter-group">
-                    <div class="filter-header">
-                        <lightning-icon icon-name="utility:bookmark" size="x-small" class="filter-icon"></lightning-icon>
-                        <span class="filter-label">BRANDS</span>
-                    </div>
-                    <div class="filter-content">
-                        <lightning-dual-listbox
-                            name="brands"
-                            source-label="Available"
-                            selected-label="Selected"
-                            options={brandOptions}
-                            value={selectedBrands}
-                            size="4"
-                            onchange={handleBrandChange}>
-                        </lightning-dual-listbox>
-                    </div>
-                </div>
-            </template>
-
-            <!-- Legal Hierarchies -->
+            <!-- Legal Hierarchies - exactly like old Aura -->
             <div class="filter-group">
                 <div class="filter-header">
                     <lightning-icon icon-name="standard:hierarchy" size="x-small" class="filter-icon"></lightning-icon>
@@ -165,7 +144,7 @@
                     <c-multi-select-lookup-lwc
                         object-api-name="Customer_Groups__c"
                         icon-name="standard:hierarchy"
-                        selected-records={selectedLegalHierarchies}
+                        label="Legal Hierarchies"
                         conditions="Account_Group_Typ__c = 'Strategic Group'"
                         fields="Customer_Node_Code__c"
                         onselectchange={handleLegalHierarchyChange}>
@@ -173,7 +152,7 @@
                 </div>
             </div>
 
-            <!-- Business Hierarchies -->
+            <!-- Business Hierarchies - exactly like old Aura -->
             <div class="filter-group">
                 <div class="filter-header">
                     <lightning-icon icon-name="standard:business_hours" size="x-small" class="filter-icon"></lightning-icon>
@@ -183,7 +162,7 @@
                     <c-multi-select-lookup-lwc
                         object-api-name="Customer_Groups__c"
                         icon-name="standard:business_hours"
-                        selected-records={selectedBusinessHierarchies}
+                        label="Business Hierarchies"
                         conditions="Account_Group_Typ__c = 'Pricing Terms'"
                         fields="Customer_Node_Code__c"
                         onselectchange={handleBusinessHierarchyChange}>
