@@ -1,0 +1,35 @@
+<!--
+ - Created by Z003D6YE on 11.01.2019.
+ -->
+
+<aura:component description="AccountCampaignLinkerRow">
+    <aura:attribute name="row" type="Object"/>
+    <aura:attribute name="colData" type="List"/>
+    <aura:attribute name="showActionButton" type="Boolean" default="false"/>
+    <aura:attribute name="actionType" type="String"/>
+    <aura:attribute name="actionIcon" type="String"/>
+    <aura:attribute name="textColor" type="String" default="blue"/>
+
+    <aura:registerEvent name="accountCampaignLinkerRowActionEvent" type="c:AccountCampaignLinkerRowActionEvent"/>
+
+
+    <tr class="{! !v.row.hasContacts ? 'row-noContacts' : ''}" ondblclick="{!c.handleDblClick}">
+        <aura:if isTrue="{!v.showActionButton}">
+                <td>
+                    <button class="{!'slds-button'}" onclick="{!c.handleRowAction}">
+                        <i class="{!'material-icons '+v.textColor}">
+                            {!v.actionIcon}
+                        </i>
+                    </button>
+                </td>
+        </aura:if>
+        <aura:iteration items="{!v.colData}" var="col">
+            <td>
+                <c:AccountCampaignLinkerRowItem row="{!v.row}"
+                                                fieldName="{!col.fieldName}"
+
+                />
+            </td>
+        </aura:iteration>
+    </tr>
+</aura:component>

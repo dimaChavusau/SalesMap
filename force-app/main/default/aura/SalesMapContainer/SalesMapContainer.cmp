@@ -1,0 +1,525 @@
+<!--
+ - Created by z003d6ye on 04.05.2018.
+ -->
+
+<aura:component extends="c:Base" description="SalesMapContainer" controller="SalesMapController" access="global"
+                implements="force:appHostable,flexipage:availableForAllPageTypes,lightning:isUrlAddressable">
+    <ltng:require styles="{!$Resource.materialicons+','+$Resource.hamburgerCSS}"/>
+	  <aura:registerEvent name="accountCampaignLinkerRowActionEvent" type="c:AccountCampaignLinkerRowActionEvent"/>
+    <aura:attribute name="acc" type="Account[]" description="list of accounts returned by search action"/>
+    <aura:attribute name="accDisplayed" type="Account[]"
+                    description="list of accounts to be displayed. could differ from v.acc due to search filter"/>
+    <aura:attribute name="accFR" type="Account[]" description="list of accounts returned by search action for FR"/>
+    <aura:attribute name="accDisplayedFR" type="Account[]"
+                    description="list of accounts to be displayed. could differ from v.acc due to search filter for FR"/>
+    <aura:attribute name="mapOptions" type="Object"
+                    description="default values for map, like zoom, disableDefaultUI, etc."/>
+    <aura:attribute name="mapOptionsCenter" type="Object" description="the center of the map given in lat/lng"/>
+    <aura:attribute name="mapData" type="Object[]"
+                    description="array of objects. each object represents a marker on the map"/>
+    <aura:attribute name="mapHeight" type="Decimal" default="500" description="mapHeight in px"/>
+    <aura:attribute name="mapBoundToMarkers" type="Boolean" default="true"
+                    description="should map resize viewport after markers are added"/>
+    <aura:attribute name="user" type="User" description="a reference to the current user"/>
+    <aura:attribute name="colorByTerritory" type="Boolean" default="false"
+                    description="should GoogleMap vf page color markers by territory on init"/>
+    <aura:attribute name="generalSearchTerm" type="String" default=""
+                    description="attribute for the Search input field"/>
+    <aura:attribute name="locationSearchTerm" type="String" default=""
+                    description="attribute for location search input field"/>
+    <aura:attribute name="tableSearchTerm" type="String" default=""
+                    description="attribute for table search input field"/>
+    <aura:attribute name="selectedDisChannelFilter" type="String" default=""
+                    description="the seleced distribution channel filter"/>
+    <aura:attribute name="selectedBrands" type="String" default=""
+                    description="the seleced brands filter"/>
+    <aura:attribute name="selectedMerchantStatusFilter" type="String" default="All"
+                    description="the seleced Merchant Status filter (H_nderstatus__c Field)"/>
+    <aura:attribute name="showMerchantStatusFilter" type="Boolean" default="false"
+                    description="Show/Hide Merchant Status filter"/>        
+    <aura:attribute name="radius" type="Decimal" default="50" description="radius for location search"/>
+    <aura:attribute name="onlyMainAccounts" type="Boolean" default="false"
+                    description="filter to search for all or only main accounts"/>
+    <aura:attribute name="excludeDoNotVisit" type="Boolean" default="false"
+                    description="filter to search for all or exclude Do Not Visit accounts"/>
+    <aura:attribute name="salesTargetFilterCode" type="Boolean" default="false"
+                    description="attribute to store selected sales target filter code."/>
+    <aura:attribute name="viewOptions" type="Object" description="array of view options for coloring markers"/>
+    <aura:attribute name="salesTargetOptions" type="Object" description="array of sales target options"/>
+    <aura:attribute name="selectedViewOption" type="String" description="selected view option"/>
+    <aura:attribute name="selectedCampaigns" type="List" description="selected campaigns in multi lookup input field"/>
+    <aura:attribute name="selectedLegalHierarchies" type="List"
+                    description="selected legal hierarchies in multi lookup input field"/>
+    <aura:attribute name="selectedBusinessHierarchies" type="List"
+                    description="selected business hierarchies in multi lookup input field"/>
+    <aura:attribute name="selectedTerritories" type="List"
+                    description="selected territories in multi lookup input field"/>
+    <aura:attribute name="selectedTrainers" type="List"
+                    description="selected trainers in multi lookup input field"/>
+    <aura:attribute name="selectedLocation" type="Object" default="" description="selected location"/>
+    <aura:attribute name="columnData" type="List" description="column data for account table"/>
+    <aura:attribute name="columnDataFR" type="List" description="column data for account table"/>
+    <aura:attribute name="disChannelOptions" type="List" default="[]" description="distribution channel options"/>
+    <aura:attribute name="brandOptions" type="List" default="[]" description="brand options"/>
+    <aura:attribute name="lastLocationSuggestions" type="List" default="[]"
+                    description="list of last 10 location suggestions returned by apex controller"/>
+    <aura:attribute name="timer" type="Integer" description="timer to delay callout to apex controller"/>
+    <aura:attribute name="theme" type="string" description="attribute to store current Salesforce theme"/>
+    <aura:attribute name="displayAffiliateMapContent" type="String" default="none"
+                    description="attribute to store display style property of affiliate-map-content div"/>
+    <aura:attribute name="showCreateEventModal" type="Boolean"
+                    description="attribute to either show or hide create quick event modal"/>
+    <aura:attribute name="createEventAccountId" type="Id" description="id of account to schedule quick event"/>
+    <aura:attribute name="createEventClicked" type="Boolean"
+                    description="callback attribute to check if schedule event was executed successfully"/>
+    <aura:attribute name="userAffiliateCode" type="String"
+                    description="Affiliate code of the current user"/>
+    <aura:attribute name="userWSAAffiliates" type="String"></aura:attribute>
+	<aura:attribute name="accountStatus" type="String"
+                    default="Active Account"/>
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    <aura:handler name="change" value="{!v.selectedAffiliate}" action="{!c.onSelectedAffiliateChange}"/>
+    <aura:handler name="change" value="{!v.pageReference.state.territoryId}" action="{!c.doInit}"/>
+    <aura:handler name="change" value="{!v.createEventClicked}" action="{!c.handleCreateEventClicked}"/>
+    <aura:handler name="change" value="{!v.tableSearchTerm}" action="{!c.handleTableSearchChange}"/>
+
+    <aura:handler name="geoLocationUpdateEvent" event="c:GeoLocationUpdateEvent"
+                  action="{!c.handleGeoLocationUpdateEvent}"/>
+    <aura:handler name="accountstatusevent" event="c:accountstatusevent"
+                  action="{!c.handleaccountstatusevent}"/>
+    <aura:handler name="mainAccountSwitchEvent" event="c:MainAccountSwitchEvent"
+                  action="{!c.handleMainAccountSwitchEvent}"/>
+    <aura:handler name="createEventForAccount" event="c:CreateEventForAccount"
+                  action="{!c.handleCreateEventForAccount}"/>
+    <aura:handler name="actionButtonClick" event="c:AccountCampaignLinkerRowActionEvent"
+                  action="{!c.handleAccountCampaignLinkerRowActionEvent}"/>
+    <aura:handler name="markerToggleEvent" event="c:MarkerToggleEvent"
+                  action="{!c.handleMarkerToggleEvent}"/>
+
+    <aura:if isTrue="{!v.user.Id != null}">
+
+        <div class="map-body">
+            <button id="btnToggle" class="hamburger hamburger--arrow is-active" type="button"
+                    onclick="{!c.toggleFilterContainerVisibility}">
+                <span class="hamburger-box">
+                    <span class="hamburger-inner"></span>
+                </span>
+            </button>
+
+            <lightning:spinner aura:id="myModalSpinner" variant="brand" class="slds-hide"
+                               alternativeText="Loading accounts..."/>
+            <lightning:spinner aura:id="myAppSpinner" variant="brand" class="slds-hide"
+                               alternativeText="Loading data..."/>
+
+            <div id="filter-container">
+
+                <div id="filter-wrapper">
+                    <div class="slds-text-align--right">
+                        <a href="https://sivantos.lightning.force.com/lightning/r/ContentDocument/0691p0000074OSjAAM/view?0.source=alohaHeader"
+                           target="_blank"> Help &amp; Guide </a>
+                    </div>
+                    <button class="slds-button slds-button_brand slds-margin hideable" style="width:100%;"
+                            onclick="{!c.handleSearchButtonClick}"> Search
+                    </button>
+                   
+                    <button class="slds-button slds-button_outline-brand slds-margin " style="width:100%;"
+                            onclick="{!c.handleResetButtonClick}"> Reset
+                    </button>
+                    <div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <span class="slds-checkbox">
+                                <input type="checkbox" name="options" id="cbOnlyMainAccounts"
+                                       value="{!v.onlyMainAccounts}"
+                                       checked="{!v.onlyMainAccounts}" onchange="{!c.handleMainAccountChange}"/>
+                                <label class="slds-checkbox__label" for="cbOnlyMainAccounts">
+                                    <span class="slds-checkbox_faux"></span>
+                                    <span class="slds-text-heading--label">only main accounts</span>
+                                </label>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="options-row">
+                        <label class="slds-text-heading--label">
+                            <i class='material-icons'>search</i> Search
+                        </label>
+                        <span class="hideable">
+                            <ui:inputText class="slds-input slds-input_text" value="{!v.generalSearchTerm}"
+                                          placeholder="Search..."
+                                          updateOn="keyup" keypress="{!c.handleLoadAccountsKeyPress}"/>
+
+                        </span>
+                    </div>
+
+                    <div class="options-row">
+                        <label class="slds-text-heading--label">
+                            <i class='material-icons'>add_location</i>Location
+                        </label>
+                        <div class="slds-grid slds-gutters hideable">
+
+                            <div class="slds-col slds-size_1-of-1" style="position: relative">
+                                <ui:inputText updateOn="keyup"
+                                              click="{!c.showLocationSuggestionsWindow}"
+                                              class="slds-input"
+                                              value="{!v.locationSearchTerm}"
+                                              placeholder="Example: 91058, Erlangen, Germany"
+                                              keyup="{!c.handleInputSearchLocationChange}"
+
+                                />
+
+                                <div id="locationSuggestions" class="suggestions">
+                                    <a onclick="{!c.closeLocationSuggestionsWindow}" class="suggestions-close">
+                                        <lightning:icon iconName="utility:close" size="xx-small"/>
+                                    </a>
+                                    <lightning:spinner aura:id="myLocationSpinner" variant="brand" class="slds-hide"
+                                                       alternativeText="Loading locations..."/>
+                                    <ul id='locationSuggestionsList'>
+                                        <aura:if isTrue="{!v.lastLocationSuggestions.length > 0}">
+                                            <aura:set attribute="else">
+                                                No locations found...
+                                            </aura:set>
+                                            <aura:iteration items="{!v.lastLocationSuggestions}" var="location">
+                                                <li onclick="{!c.handleLocationSuggestionItemClick}">{!location}</li>
+                                            </aura:iteration>
+                                        </aura:if>
+
+                                    </ul>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="slds-grid">
+                            <div class="slds-col slds-size_4-of-6">
+                                <ui:inputNumber label="" class="slds-input slds-inline" value="{!v.radius}"
+                                                placeholder="Enter Radius..." updateOn="keyup"/>
+                            </div>
+                            <div class="slds-col slds-size_2-of-6">
+                                <ui:inputSelect aura:id="selectRadiusUnit" class="slds-select" label="">
+                                    <ui:inputSelectOption text="km" label="km" value="true"/>
+                                    <ui:inputSelectOption text="mi" label="mi"/>
+                                </ui:inputSelect>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="options-row">
+
+                        <aura:if isTrue="{!v.user.Profile.PermissionsModifyAllData}">
+                            <c:MultiSelectLookup objectAPIName="territory__c"
+                                                 IconName="standard:service_territory"
+                                                 LabelIcon='public'
+                                                 lstSelectedRecords="{!v.selectedTerritories}"
+                                                 label="Territories"
+                                                 fields="Code__c"
+                                                 conditions="{!'isActive__c = true'}"
+                            />
+                            <aura:set attribute="else">
+                                <c:MultiSelectLookup objectAPIName="territory__c"
+                                                     IconName="standard:service_territory"
+                                                     LabelIcon='public'
+                                                     lstSelectedRecords="{!v.selectedTerritories}"
+                                                     label="Territories"
+                                                     fields="Code__c"
+                                                     conditions="{!'Affiliate__r.Affiliate_Code__c IN '+v.userWSAAffiliates+' AND isActive__c = true'}"
+                                />
+                            </aura:set>
+                        </aura:if>
+
+                    </div>
+                    
+                    <div class="options-row">
+
+                        <aura:if isTrue="{!v.user.Profile.PermissionsModifyAllData}">
+                            <c:MultiSelectLookup objectAPIName="User"
+                                                 IconName="standard:client"
+                                                 LabelIcon="perm_identity"
+                                                 lstSelectedRecords="{!v.selectedTrainers}"
+                                                 label="Trainers"
+                                                 conditions="{!'IsActive = true and Sivantos_Department_del__c = \''+ 'Audiology Trainer' + '\''}"
+                            />
+                            <aura:set attribute="else">
+                                <c:MultiSelectLookup objectAPIName="User"
+                                                     IconName="standard:client"
+                                                 	 LabelIcon="perm_identity"
+                                                     lstSelectedRecords="{!v.selectedTrainers}"
+                                                     label="Trainers"
+                                                     conditions="{!'Affiliate_Code_from_Affiliate__c IN '+v.userWSAAffiliates+' and IsActive = true and Sivantos_Department_del__c = \''+ 'Audiology Trainer' + '\''}"
+                                />
+                            </aura:set>
+                        </aura:if>
+
+                    </div>
+
+                    <div class="options-row">
+                        <c:MultiSelectLookup objectAPIName="Campaign"
+                                             IconName="standard:campaign"
+                                             lstSelectedRecords="{!v.selectedCampaigns}"
+                                             LabelIcon="contact_mail"
+                                             label="Campaigns"
+
+                        />
+                    </div>
+                    <aura:if isTrue="{!v.userAffiliateCode == 'W-US' || v.userAffiliateCode == 'S-US' || v.user.Profile.PermissionsModifyAllData}">
+                        <div class="options-row">
+                            <label class="slds-text-heading--label">
+                                <i class='material-icons'>input</i>Brands  
+                                <lightning:helptext content="Hold CTRL to select multiple brands" />
+                            </label>
+                            <ui:inputSelect class="slds-select size-small"
+                                            aura:id="selectBrands"
+                                            change="{!c.onBrandsChange}"
+                                            multiple="true"
+
+                            >
+                                <aura:iteration items="{!v.brandOptions}" var="item">
+                                    <ui:inputSelectOption text="{!item.label}" label="{!item.label}"/>
+                                </aura:iteration>
+
+                            </ui:inputSelect>
+                        </div>
+                    </aura:if>
+                    <div class="options-row">
+                        <c:MultiSelectLookup objectAPIName="Customer_Groups__c"
+                                             IconName="standard:client"
+                                             lstSelectedRecords="{!v.selectedLegalHierarchies}"
+                                             label="Legal Hierarchies"
+                                             conditions="Account_Group_Typ__c = 'Strategic Group'"
+                                             fields="Customer_Node_Code__c"
+                                             LabelIcon="perm_identity"
+
+                        />
+                    </div>
+
+                    <div class="options-row">
+                        <c:MultiSelectLookup objectAPIName="Customer_Groups__c"
+                                             IconName="standard:record"
+                                             lstSelectedRecords="{!v.selectedBusinessHierarchies}"
+                                             label="Business Hierarchies"
+                                             conditions="Account_Group_Typ__c = 'Pricing Terms'"
+                                             fields="Customer_Node_Code__c"
+                                             LabelIcon="business"
+
+                        />
+                    </div>
+
+                    <div class="options-row">
+                        <label class="slds-text-heading--label">
+                            <i class='material-icons'>input</i>Distribution Channel
+                        </label>
+                        <ui:inputSelect class="slds-select"
+                                        aura:id="selectedDisChannel"
+                                        change="{!c.onDisChannelChange}"
+                                        multiple="true"
+
+                        >
+                            <aura:iteration items="{!v.disChannelOptions}" var="item">
+                                <ui:inputSelectOption text="{!item.label}" label="{!item.label}"/>
+                            </aura:iteration>
+
+                        </ui:inputSelect>
+                    </div>
+					<!-- ********************************************************************************** -->
+                    <div class="options-row">
+                        <label class="slds-text-heading--label">
+                            <i class='material-icons'>input</i>Account Status
+                        </label>
+                        <ui:inputSelect class="slds-select"
+                                        aura:id="selectedstatusChannel"
+                                        change="{!c.handleaccountstatusevent}"
+                                        multiple="true"
+
+                        >
+                            
+                                <ui:inputSelectOption text="All" label="All"/>
+                            	<ui:inputSelectOption text="Active Account" label="Active Account"/>
+                            	<ui:inputSelectOption text="Inactive Account" label="Inactive Account"/>
+                            	<ui:inputSelectOption text="Dormant Account" label="Dormant Account"/>
+                            	<ui:inputSelectOption text="Migrated" label="Migrated"/>
+								<ui:inputSelectOption text="Prospect Account" label="Prospect Account"/>
+                            
+                        </ui:inputSelect>
+                    </div>
+                    
+                    <aura:if isTrue="{!v.showMerchantStatusFilter}">
+                        <div class="options-row">
+                            <label class="slds-text-heading--label">
+                                <i class='material-icons'>input</i>merchant status
+                            </label>
+                            <ui:inputSelect class="slds-select"
+                                            aura:id="selectedMerchantStatusChannel"
+                                            change="{!c.onHandleMerchantStatusChange}"
+                                            multiple="true"
+
+                            >
+                                
+                                    <ui:inputSelectOption text="All" label="All"/>
+                                    <ui:inputSelectOption text="Bronze" label="Bronze"/>
+                                    <ui:inputSelectOption text="Silber" label="Silber"/>
+                                    <ui:inputSelectOption text="Gold" label="Gold"/>
+                                    <ui:inputSelectOption text="Question Mark" label="Question Mark"/>
+                                    <ui:inputSelectOption text="Poor Dogs" label="Poor Dogs"/>
+                                    <ui:inputSelectOption text="Stars" label="Stars"/>
+                                    <ui:inputSelectOption text="New customer" label="New customer"/>
+                                    <ui:inputSelectOption text="Cash Cow" label="Cash Cow"/>
+                                
+                            </ui:inputSelect>
+                        </div>
+                    </aura:if>
+                    
+                    <!-- ********************************************************************************** -->
+
+                    <div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <span class="slds-checkbox">
+                                <input type="checkbox" name="options" id="cbExcludeDoNotVisit"
+                                       value="{!v.excludeDoNotVisit}"
+                                       checked="{!v.excludeDoNotVisit}" onchange="{!c.handleExcludeDoNotVisitChange}"/>
+                                <label class="slds-checkbox__label" for="cbExcludeDoNotVisit">
+                                    <span class="slds-checkbox_faux"></span>
+                                    <span class="slds-text-heading--label">Exclude Do Not Visit</span>
+                                </label>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="options-row">
+                        <label class="slds-text-heading--label">
+                            <i class='material-icons'>card_travel</i>Visits &amp; Trainings
+                        </label>
+                        <ui:inputSelect class="slds-select"
+                                        aura:id="selectSalesTarget"
+                                        change="{!c.onSalesTargetSelectChange}"
+
+                        >
+                            <aura:iteration items="{!v.salesTargetOptions}" var="item">
+                                <ui:inputSelectOption text="{!item.label}" label="{!item.label}"/>
+                            </aura:iteration>
+
+                        </ui:inputSelect>
+                    </div>
+                    <br/>
+		
+                   	<!-- ********************************************************************************* -->
+                   
+
+                    <button class="slds-button slds-button_brand slds-margin hideable" style="width:100%;"
+                            onclick="{!c.handleSearchButtonClick}"> Search
+                    </button>
+ 				
+                    <button class="slds-button slds-button_outline-brand slds-margin " style="width:100%;"
+                            onclick="{!c.handleResetButtonClick}"> Reset
+                    </button>
+
+                </div>
+            </div>
+
+            <aura:if isTrue="{! !v.accDisplayed.length > 0}">
+                <div id="simpleMap" style="padding:50px">
+                    We could not find a Territory assigned to you. Please use the search options to see account data and
+                    the map.
+                </div>
+            </aura:if>
+
+            <div id="affiliate-map-content" style="{!'display:'+v.displayAffiliateMapContent}">
+
+                <aura:if isTrue="{!v.accDisplayed.length > 0}">
+                    <div id="map-wrapper">
+                        <c:GoogleMap mapHeight="{!v.mapHeight}"
+                                     mapOptions="{!v.mapOptions}"
+                                     mapOptionsCenter="{!v.mapOptionsCenter}"
+                                     mapData="{!v.mapData}"
+                                     mapBoundToMarkers="{!v.mapBoundToMarkers}"
+                                     unit="{!v.selectedLocation.unit}"
+                                     onlyMainAccounts="{!v.onlyMainAccounts}"
+                                     accountStatus="{!v.accountStatus}"
+                                     selectedViewOption="{!v.selectedViewOption}"
+                                     colorByTerritory="{!v.colorByTerritory}"/>
+
+                    </div>
+
+                </aura:if>
+                <div class="options-row options-row_margin_small"
+                     style="margin-top:-55px; margin-left:5px; text-align:center;     margin-bottom: 40px;">
+                    <div class="selectViewOptions-wrapper">
+
+                        <div>
+                            Colorize marker based on:
+                        </div>
+                        <ui:inputSelect class="slds-select selectViewOptions"
+                                        aura:id="selectViewOptions"
+                                        multiple="false" change="{!c.handleViewChange}">
+                            <ui:inputSelectOption text="--None--" label="--None--"
+                                                  class="optionClass"/>
+                            <aura:iteration var="item" items="{!v.viewOptions}">
+
+                                <ui:inputSelectOption text="{!item.value}" label="{!item.label}"
+                                                      class="{!item.class}"/>
+                            </aura:iteration>
+                        </ui:inputSelect>
+
+                    </div>
+                </div>
+              
+                <aura:if isTrue="{!and(v.accDisplayed.length > 0,v.userAffiliateCode!='S-FR')}">
+                    <ui:scrollerWrapper class="scrollerSize">
+                        <div class="innerDivWrapper" style="margin-top: 30px;">
+                            <c:AccountCampaignLinkerTable
+                                    rowData="{!v.acc}"
+                                    rowDataDisplayed="{!v.accDisplayed}"
+                                    colData="{!v.columnData}"
+                                    title="{!v.accDisplayed.length +'  accounts found'}"
+                                    isTableClosable="false"
+                                    showActionButton="true"
+                                    numberOfAccountsPerPage="20"
+                                    handleSearch="false"
+                                    searchTerm="{!v.tableSearchTerm}"
+                                    actionIcon="store_mall_directory"  
+                                    actionType="openAccount"
+                                    showDownloadButton="true"                      
+                                                          
+                            />
+                        </div>
+                    </ui:scrollerWrapper>
+                </aura:if>
+                <aura:if isTrue="{!and(v.accDisplayed.length > 0, v.userAffiliateCode=='S-FR')}">
+                    <ui:scrollerWrapper class="scrollerSize">
+                        <div class="innerDivWrapper" style="margin-top: 30px;">
+                            <c:AccountCampaignLinkerTable
+                                    rowData="{!v.acc}"
+                                    rowDataDisplayed="{!v.accDisplayed}"
+                                    colData="{!v.columnDataFR}"
+                                    title="{!v.accDisplayed.length +'  accounts found'}"
+                                    isTableClosable="false"
+                                    showActionButton="true"
+                                    numberOfAccountsPerPage="20"
+                                    handleSearch="false"
+                                    searchTerm="{!v.tableSearchTerm}"
+                                    actionIcon="store_mall_directory"  
+                                    actionType="openAccount"
+                                    showDownloadButton="true" 
+                            />
+                        </div>
+                    </ui:scrollerWrapper>
+                </aura:if>
+
+            </div>
+
+
+        </div>
+
+
+    </aura:if>
+
+
+    <aura:if isTrue="{!v.showCreateEventModal}">
+        <c:AccountQuickEvent
+                recordId="{!v.createEventAccountId}"
+                createEventClicked="{!v.createEventClicked}"
+                showModal="{!v.showCreateEventModal}"
+                showCloseButton="true"
+                showBackdrop="true"
+                mode="modal"
+        />
+
+    </aura:if>
+</aura:component>

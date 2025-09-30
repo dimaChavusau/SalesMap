@@ -1,0 +1,222 @@
+<!--
+ - Created by Z003D6YE BASTIAN KALTDORF on 11.01.2019.
+ -->
+
+<aura:component 
+    description="AccountCampaignLinkerTable" 
+    extends="c:Base" 
+    controller="AccountCampaignLinkerTableController"
+>
+
+    <aura:attribute name="colData" type="List"/>
+    <aura:attribute name="showDownloadButton" type="Boolean"/>
+    <aura:attribute name="rowData" type="Object"/>
+    <aura:attribute name="rowDataDisplayed" type="Object"/>
+    <aura:attribute name="title" type="String"/>
+    <aura:attribute name="subtitle" type="String"/>
+    <aura:attribute name="subtitleIcon" type="String" default=""/>
+    <aura:attribute name="actionType" type="String"/>
+    <aura:attribute name="showActionButton" type="Boolean" default="true"/>
+    <aura:attribute name="actionIcon" type="String"/>
+    <aura:attribute name="cardHeaderIcon" type="String" default=""/>
+    <aura:attribute name="assistiveText" type="String"/>
+    <aura:attribute name="showTable" type="Boolean" default="true"/>
+    <aura:attribute name="isTableClosable" type="Boolean" default="true"/>
+    <aura:attribute name="style" type="String"/>
+    <aura:attribute name="searchTerm" type="String"/>
+    <aura:attribute name="textColor" type="String"/>
+    <aura:attribute name="showGrouped" type="Boolean"/>
+    <aura:attribute name="showSearchBar" type="Boolean" default="true"/>
+    <aura:attribute name="handleSearch" type="Boolean" default="true"
+                    description="If true, the AccountCampaignLinkerTable will perform search and filter records. If false, the parent component must pass a searchTearm attribute to this component and handle the change of the attribute via change handler"/>
+    <aura:attribute name="numberOfAccountsPerPage" type="Integer" default="50"/>
+    <aura:attribute name="currentPage" type="Integer" default="1"/>
+
+    <aura:attribute name="actionsList" type="List" default="[]"/>
+    <aura:attribute name="sortedBy" type="String" default="name"/>
+    <aura:attribute name="sortedDirection" type="String" default="asc"/>
+    <aura:attribute name="defaultSortDirection" type="String" default="asc"/>
+
+    <aura:handler name="init" action="{!c.doInit}" value="{!this}"/>
+    <aura:method name="initializeMethod" action="{!c.doInit}"/>
+
+    <ltng:require
+            styles="{!$Resource.materialicons}"
+    />
+
+    <article class="slds-card" style="{!v.style}">
+        <div class="slds-card__header slds-grid">
+            <header class="{! 'slds-media slds-media_center slds-has-flexi-truncate ' + (v.isTableClosable ? 'tableHeadLine' : '')}">
+                <aura:if isTrue="{!v.cardHeaderIcon != ''}">
+                    <div class="slds-media__figure">
+                    <span class="slds-icon_container slds-icon-standard-account" title="account">
+                        <lightning:icon iconName="{!v.cardHeaderIcon}" size="medium"/>
+                      <span class="slds-assistive-text">{!v.assistiveText}</span>
+                    </span>
+                    </div>
+                </aura:if>
+
+                <div class="slds-media__body">
+                    <aura:iteration items="{!v.actionsList}" var="action">
+                        <c:AccountCampaignLinkerTableAction type="{!action.type}" label="{!action.label}"
+                                                            class="{!action.class+' slds-float_left'}"/>
+                    </aura:iteration>
+                    <aura:if isTrue="{!v.isTableClosable}">
+                        <h2 class="slds-card__header-title " onclick="{!c.toggleTableVisibility}">
+
+                            <span>
+                                <i class="i-arrow material-icons">
+                                {! v.showTable ? 'keyboard_arrow_up' : 'keyboard_arrow_down'}
+                                </i>
+                                {!v.title}
+                            </span>
+                        </h2>
+                        <aura:set attribute="else">
+                            <div style="display:flex;justify-content: space-between;align-items: center;">
+                                <h2 class="slds-card__header-title">
+                                    {!v.title}
+                                </h2>
+                                <aura:if isTrue="{!v.showDownloadButton == true}">
+                                    <button onclick="{!c.handleExport}" class="slds-button slds-button_outline-brand">
+                                        Download
+                                    </button>
+                                </aura:if>
+                            </div>
+                        </aura:set>
+                    </aura:if>
+
+                </div>
+                <div class="slds-no-flex">
+
+
+                </div>
+            </header>
+        </div>
+        <div class="slds-card__body slds-card__body_inner">
+            <div class="accountCampaignLinkerTable">
+
+                <div class="{! !v.showTable ? 'slds-hide' : ''}">
+                    <h2 class="">
+                        <aura:if isTrue="{!v.subtitleIcon != ''}">
+                            <lightning:icon iconName="{!v.subtitleIcon}" size="small" class="subtitle-icon"/>
+                        </aura:if>
+                        {!' '+v.subtitle}
+                    </h2>
+
+                    <aura:if isTrue="{!v.showSearchBar}">
+                        <div class="slds-grid">
+                            <div class="slds-col slds-large-size_3-of-12 slds-small-size_12-of-12 slds-medium-size_12-of-12">
+                                <div class="slds-form-element">
+                                    <div class="slds-form-element__control slds-input-has-icon slds-input-has-icon_left">
+                                        Search<br/>
+                                        <ui:inputText label="" class="slds-input slds-inline width90"
+                                                      value="{!v.searchTerm}"
+                                                      placeholder="Search..." keyup="{!c.handleKeyUpSearch}"
+                                                      updateOn="keyup"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </aura:if>
+
+                    <aura:if isTrue="{!v.rowDataDisplayed.length > v.numberOfAccountsPerPage}">
+                        <c:Pagination currentPage="{!v.currentPage}" max="{!v.rowDataDisplayed.length}"
+                                      recordsPerPage="{!v.numberOfAccountsPerPage}"/>
+                    </aura:if>
+
+
+                    <aura:if isTrue="{!v.showGrouped}">
+
+                        <aura:iteration items="{!v.rowDataDisplayed}" var="row"
+                                        start="{!v.numberOfAccountsPerPage * (v.currentPage-1)}"
+                                        end="{!(v.numberOfAccountsPerPage * (v.currentPage-1))+v.numberOfAccountsPerPage}"
+                        >
+                            <div class="grouped">
+                                <div class="accountGroupTitle">
+                                    {!row.Name} - {!row.Bill_to_Ship_to_text__c}
+                                </div>
+                                <div class="accountGroupSubTitle">
+                                    {!row.Customer_Hierarchy_2_Description__r.Name} -
+                                    {!row.Pricing_Terms_Descripton__r.Name} - {!row.Territory__r.Name} -
+                                    <aura:unescapedHtml value="{!row.Segmentation_POS__c}"/>
+                                </div>
+                                <aura:if isTrue="{!row.matchingContacts.length > 0}">
+
+                                    <table class="">
+                                        <thead>
+                                        <tr>
+                                            <aura:if isTrue="{!v.showActionButton}">
+                                                <th> Action</th>
+                                            </aura:if>
+                                            <aura:iteration items="{!v.colData}" var="col">
+                                                <th> {!col.label} </th>
+                                            </aura:iteration>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+
+                                        <aura:iteration items="{!row.matchingContacts}" var="contact">
+
+                                            <c:AccountCampaignLinkerRow
+                                                    row="{!contact}"
+                                                    colData="{!v.colData}"
+                                                    showActionButton="{!v.showActionButton }"
+                                                    actionType="{!v.actionType}"
+                                                    actionIcon="{!v.actionIcon}"
+                                                    textColor="{!v.textColor}"
+
+                                            />
+
+                                        </aura:iteration>
+
+                                        </tbody>
+                                    </table>
+                                </aura:if>
+                            </div>
+                        </aura:iteration>
+
+                        <aura:set attribute="else">
+                            <table class="">
+                                <thead>
+                                <tr>
+                                    <aura:if isTrue="{!v.showActionButton}">
+                                        <th> Action</th>
+                                    </aura:if>
+                                    <aura:iteration items="{!v.colData}" var="col">
+                                        <th> {!col.label} </th>
+                                    </aura:iteration>
+                                </tr>
+                                </thead>
+                                <tbody>
+
+                                <aura:iteration items="{!v.rowDataDisplayed}" var="row"
+                                                start="{!v.numberOfAccountsPerPage * (v.currentPage-1)}"
+                                                end="{!(v.numberOfAccountsPerPage * (v.currentPage-1))+v.numberOfAccountsPerPage}"
+                                >
+
+                                    <c:AccountCampaignLinkerRow
+                                            row="{!row}"
+                                            colData="{!v.colData}"
+                                            showActionButton="{!v.showActionButton }"
+                                            actionType="{!v.actionType}"
+                                            actionIcon="{!v.actionIcon}"
+                                            textColor="{!v.textColor}"
+
+                                    />
+
+                                </aura:iteration>
+
+                                </tbody>
+                            </table>
+                        </aura:set>
+                    </aura:if>
+
+                    <aura:if isTrue="{!v.rowDataDisplayed.length > v.numberOfAccountsPerPage}">
+                        <c:Pagination currentPage="{!v.currentPage}" max="{!v.rowDataDisplayed.length}"
+                                      recordsPerPage="{!v.numberOfAccountsPerPage}"/>
+                    </aura:if>
+                </div>
+            </div>
+        </div>
+    </article>
+</aura:component>

@@ -1,0 +1,59 @@
+<aura:component>
+    <!-- Needed to send messages to VF page. But we will get it from VF itself -->
+    <aura:attribute name="vfHost" type="String" default=""/>
+
+    <aura:attribute name="unit" type="String" default=""/>
+
+    <!-- recordId attribute is not needed when using in one.app but adding it here as need to test it with DemoApp.app -->
+    <aura:attribute name="recordId" type="ID"/>
+
+    <!-- Google Map options -->
+    <aura:attribute name="mapOptions" type="Object"/>
+    <!--
+		Goole map option to set center becasue it's required in following format
+		{"lat":-25.363882, "lng":131.044922}
+	 -->
+    <aura:attribute name="mapOptionsCenter" type="Object"/>
+
+    <aura:attribute name="onlyMainAccounts" type="Boolean"/>
+    <aura:attribute name="accountStatus" type="String"/>
+    <!--
+		Google map data for marker in following format
+		[{"lat":-25.363882, "lng":131.044922, "markerText":"This is an account"}]
+   	-->
+    <aura:attribute name="mapData" type="Object[]"/>
+
+    <aura:attribute name="loadMap" type="Boolean" default="false"/>
+
+    <aura:attribute name="mapBoundToMarkers" type="Boolean"/>
+    <aura:attribute name="colorByTerritory" type="Boolean"/>
+    <aura:attribute name="colorByLegalHierarchy" type="Boolean"/>
+
+    <!-- Domain of LC for VF to send message -->
+    <aura:attribute name="lcHost" type="String"/>
+
+    <aura:attribute name="mapHeight" type="Decimal" default="800"/>
+    <aura:attribute name="selectedViewOption" type="String" default=""/>
+
+    <!-- Set listener from VF. This is to check when VF is loaded so we can send marker data -->
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+
+    <aura:handler event="c:RowActionEvent" action="{!c.handleRowActionEvent}"/>
+
+    <aura:handler name="change" action="{!c.handleSelectedViewOptionChange}" value="{!v.selectedViewOption}"/>
+    <aura:handler name="change" action="{!c.handleMapDataChange}" value="{!v.mapData}"/>
+
+    <aura:registerEvent name="geoLocationUpdateEvent" type="c:GeoLocationUpdateEvent"/>
+    <aura:registerEvent name="markerToggleEvent" type="c:MarkerToggleEvent"/>
+    <aura:registerEvent name="mainAccountSwitchEvent" type="c:MainAccountSwitchEvent"/>
+    <aura:registerEvent name="createEventForAccount" type="c:CreateEventForAccount"/>
+	<aura:registerEvent name="accountstatusevent" type="c:accountstatusevent"/>
+    
+    <aura:if isTrue="{!v.mapData.length > 0}">
+        <iframe id="gmapIframe" aura:id="vfFrame" src="{! '/apex/GoogleMap?lcHost=' + v.lcHost}"
+                style="{!'height:'+v.mapHeight+'px'}"/>
+        <aura:set attribute="else">
+            No Accounts with proper MailingLatitude and MailingLongitude to display on map
+        </aura:set>
+    </aura:if>
+</aura:component>

@@ -1,0 +1,15 @@
+<!--
+ - Created by Z003D6YE on 11.01.2019.
+ -->
+
+<aura:component description="AccountCampaignLinkerRowItem">
+    <aura:attribute name="row" type="Object" />
+    <aura:attribute name="fieldName" type="String" />
+    <aura:attribute name="outputValue" type="String" />
+    
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+
+       <aura:unescapedHtml value="{!v.outputValue}"/>
+
+    
+</aura:component>

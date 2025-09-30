@@ -1,0 +1,432 @@
+/**
+ * Created by z003d6ye on 04.05.2018.
+ */
+
+ .THIS .slds-template_default {
+    padding:0 !important;
+}
+
+.THIS html, .THIS body {
+    width:100%;
+    height:100%;
+    padding:10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    overflow:auto;
+    box-sizing: border-box;
+    }
+
+.THIS.map-body {
+    display:flex;
+}
+.THIS p {
+    margin:10px 0px;
+}
+
+.THIS .slds-text-heading_label, .THIS .slds-text-heading--label {
+    color: rgb(22, 50, 92);
+}
+
+.THIS.modal {
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    z-index:999;
+    background:rgba(0,0,0,0.8);
+}
+
+.THIS .modal-close {
+    position:absolute;
+    top:10px;
+    right:10px;
+    padding:5px;
+
+}
+.THIS .modal-content {
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    background:white;
+    padding:10px;
+    max-height: 50%;
+    overflow: scroll;
+}
+
+.THIS .modal-content .accountQuickEventWrapper {
+    height:75%;
+}
+.THIS .modal-wrapper {
+    display:none;
+    width:100%;
+    height:100%;
+    z-index:999;
+    padding-bottom:50px;
+}
+
+.THIS .modal-wrapper .options-row {
+    margin:10px 0px;
+}
+
+
+
+.THIS .modal-body {
+    background:white;
+    z-index:999;
+    min-width:300px;
+}
+
+.THIS .modal-wrapper h1 {
+    font-size:16px;
+}
+
+
+
+.THIS .modal-wrapper .slds-select {
+    height:auto;
+}
+
+.THIS.optionPanel {
+    margin:10px 0px;
+}
+
+.THIS .slds-margin {
+ 	width: 50%!Important;
+	margin: 5px 5px 5px 0;
+}
+
+.THIS .slds-margin-20 {
+    margin:20px 0px;
+}
+
+.THIS .slds-padding {
+    padding:10px;
+}
+
+.THIS #btnToggle {
+    position:absolute;
+    background:white;
+    border-radius:2px;
+    cursor: pointer;
+    z-index: 99;
+    display:inline-block;
+    margin-left:5px;
+    margin-top:5px;
+}
+
+
+.THIS .slds-select-small {
+   height: 150px !important;
+}
+
+.THIS .slds-select {
+    background:white;
+    z-index:999;
+}
+
+.THIS .slds-select.size-small {
+    height: 105px;
+}
+
+.THIS .select-wrapper {
+    display:none;
+    background:white;
+    z-index:999;
+}
+
+.THIS .material-icons {
+    vertical-align:middle;
+        margin-right: 5px;
+}
+
+.THIS .slds-tabs_default__item slds-active .material-icons {
+    color:#0070d2;
+}
+
+.THIS .slds-input_text {
+    width:100%;
+}
+
+.THIS .label {
+    font-weight:bold;
+}
+
+.THIS .options-row {
+    margin:15px 0px;
+}
+
+.THIS .options-row p {
+    margin:0;
+}
+
+.THIS .options-row label {
+display:block;
+}
+
+.THIS .options-row .material-icons {
+    margin-right:5px;
+}
+
+.THIS .options-row.options-row_margin_small {
+    margin:10px 0px;
+}
+
+.THIS .suggestions {
+    display:none;
+    position:absolute;
+    border-radius:3px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    padding:5px;
+    background:white;
+    z-index:9999;
+    width:92%;
+}
+
+.THIS .suggestions-close {
+    text-align: right;
+    cursor: pointer;
+    position: absolute;
+    right: 10px;
+    top: 5px;
+}
+
+.THIS .suggestions li {
+    border-radius:3px;
+    padding:5px;
+    cursor:pointer;
+}
+
+.THIS .suggestions li.active, .THIS .suggestions li:hover {
+    background:#b4dcff;
+}
+
+
+.THIS .hasHelp {
+    transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+}
+
+.THIS #simpleMap {
+    background:white;
+    padding:20px;
+    border-radius:4px;
+    display:inline-block;
+    width:100%;
+    text-align:center;
+}
+
+.THIS .helpBubble {
+    display:none;
+    position:absolute;
+    margin-top: 10px;
+    padding:5px;
+    font-size:12.5px;
+    color:white;
+    background:#202d3a;
+    border-radius:3px;
+    transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+    right:0;
+    width:150px;
+    text-align:center;
+    z-index:9999;
+}
+
+.THIS .hasHelp:hover .helpBubble {
+    display:block;
+}
+
+.THIS #filter-container {
+    width:300px;
+    max-height: 75%;
+    z-index: 98;
+    background: white;
+    border-right:1px solid rgba(0,0,0,.2);
+    overflow: auto;
+    overflow-x: hidden;
+    border-radius: 4px;
+    transition:0.2s all linear;
+    white-space:nowrap;
+}
+.THIS #filter-container.hide {
+    width:0px;
+    border:0;
+    height:0px;
+    background:white;
+     transition:0.3s all linear;
+}
+
+.THIS #filter-wrapper {
+    width:100%;
+    padding:10px;
+    display:inline-block;
+    margin-top:20px;
+}
+
+
+
+.THIS #affiliate-map-content {
+    display:none;
+    background: white;
+    width:100%;
+}
+
+.THIS #affiliate-map-content.fullWidth {
+    width:100% !important;
+}
+
+.THIS .slds-grid.hideable .slds-col.slds-size_2-of-12 {
+    margin-left: 10px;
+}
+
+.THIS .btnChangeView.selected {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    text-align: center;
+    vertical-align: middle;
+    border: 1px solid rgb(217, 219, 221);
+    -webkit-transition: border .15s linear;
+    transition: border .15s linear;
+    background-color: rgb(0, 112, 210);
+    border-color: rgb(0, 112, 210);
+    color: rgb(255, 255, 255);
+}
+
+.THIS.scrollerSize {
+    height: 100%;
+    width: 100%;
+    border-radius: 1px;
+}
+
+.THIS .innerDivWrapper {
+    min-height: 101%;
+    padding-bottom: 20px;
+}
+
+.THIS .foundAccounts {
+    margin-left:10px;
+}
+
+.THIS #btnClearSearch {
+    position:absolute;
+    top:0;
+    right:0;
+    margin-right:10px;
+    margin-top:10px;
+}
+
+.THIS .noBorder {
+    border:0;
+}
+
+.THIS .selectViewOptions {
+    width:200px;
+    margin:0 auto;
+}
+
+.THIS .selectViewOptions-wrapper {
+    position: absolute;
+    left:50%;
+    background:white;
+    padding:2px;
+    /* background: white; */
+    border-radius:4px;
+      transform: translate(-50%, 0%);
+
+
+}
+
+@media (min-width: 1081px) {
+    .THIS #filter-container {
+        border-bottom:1px solid rgba(0,0,0,.2);
+    }
+}
+
+@media (max-width: 1080px) {
+    .THIS.map-body {
+        display:block;
+    }
+    .THIS #simpleMap {
+        text-align:right;
+    }
+     .THIS #filter-container {
+           position:relative;
+           width: 100%;
+           max-height:200%;
+    }
+}
+
+@media (max-width: 480px) {
+    .THIS #simpleMap {
+        padding-top:40px;
+         text-align:center;
+    }
+    .THIS html, .THIS body {
+        overflow:hidden;
+    }
+    .THIS .modal-body {
+        position:fixed;
+        width:100%;
+        height:100%;
+        top:0;
+        left:0;
+        transform: translate(0,0);
+    }
+
+    .THIS .options-row {
+            margin: 10px 0;
+            font-size: 18px;
+    }
+
+    .THIS #filter-wrapper {
+        padding: 10px;
+        display: inline-block;
+        width: 100%;
+        margin:0;
+    }
+    
+    .THIS .selectViewOptions-wrapper {
+        margin-top: -10px;
+
+        font-size: 12px;
+    }
+
+    .THIS #map-wrapper {
+        margin-top:10px;
+    }
+
+    .THIS .selectViewOptions-wrapper select.uiInput--default {
+        width: 150px;
+    }
+
+    .THIS select.uiInput--default, .THIS .slds-input {
+        padding:0 1rem 0 .75rem !important;
+
+        font-size: 12px;
+        padding: 3px;
+    }
+
+    .THIS select.uiInput--default {
+
+    }
+
+    .THIS #affiliate-map-content {
+        padding-top:30px;
+    }
+
+    .THIS .slds-select-small {
+       height: 90px !important;
+    }
+
+   .THIS .helpBubble {
+
+   }
+
+   .THIS .foundAccounts {
+       margin-left:5px;
+   }
+
+
+   .THIS .search-tags {
+       display:none;
+   }
+}

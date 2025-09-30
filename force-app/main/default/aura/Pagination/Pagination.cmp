@@ -1,0 +1,38 @@
+<!--
+ - Created by z003d6ye on 13.03.2019.
+ -->
+
+<aura:component description="Pagination" extends="c:Base">
+
+    <aura:attribute name="max" required="true" type="Integer"/>
+    <aura:attribute name="currentPage" type="Integer" default="1" required="true"/>
+    <aura:attribute name="recordsPerPage" type="Integer" required="true"/>
+    <aura:attribute name="pageList" type="List"/>
+
+    <aura:attribute name="minRec" type="Integer"/>
+    <aura:attribute name="maxRec" type="Integer"/>
+
+    <aura:handler name="init" action="{!c.doInit}" value="{!this}"/>
+    <aura:handler name="change" action="{!c.handleMaxChange}" value="{!v.max}"/>
+    <aura:handler name="change" action="{!c.handleCurrentPageChange}" value="{!v.currentPage}"/>
+
+
+    <div>
+        <div class="pagination">
+            <aura:iteration items="{!v.pageList}" var="page" indexVar="i">
+                <c:PaginationButton index="{!i}" page="{!page}" currentPage="{!v.currentPage}"/>
+            </aura:iteration>
+
+        </div>
+        <div class="pagIndicator">
+            Displaying
+            {!v.minRec}
+            to
+            {!v.maxRec}
+            records on page {!v.currentPage}
+        </div>
+    </div>
+
+
+
+</aura:component>

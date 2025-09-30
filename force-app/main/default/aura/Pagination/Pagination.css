@@ -1,0 +1,22 @@
+/**
+ * Created by bastiankaltdorf on 2019-04-03.
+ */
+
+ .THIS {
+     margin:10px 0px;
+     box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+     padding:10px;
+     border-radius:6px;
+     transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+ }
+
+.THIS .pagination {
+
+   display:flex;
+    flex-wrap:wrap;
+
+}
+
+.THIS .pagIndicator {
+    margin:10px 0px;
+}

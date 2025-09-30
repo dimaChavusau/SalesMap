@@ -1,0 +1,252 @@
+<!--
+- Created by Z003D6YE on 08.01.2019.
+-->
+
+<aura:component description="AccountQuickEvent" controller="AccountQuickEventController" extends="c:Base"
+                implements="force:appHostable,flexipage:availableForAllPageTypes,force:hasRecordId,force:lightningQuickAction"
+                access="global" >
+    
+    
+    <aura:attribute name="acc" type="Account"/>
+    <aura:attribute name="contactSelected" type="Contact"/>
+    <aura:attribute name="options" type="List"/>
+    <aura:attribute name="hasContacts" type="Boolean"/>
+    <aura:attribute name="createEventClicked" type="Boolean"/>
+    <aura:attribute name="showCloseButton" type="Boolean"/>
+    <aura:attribute name="showBackButton" type="Boolean"/>
+    <aura:attribute name="showModal" type="Boolean" default="true"/>
+    <aura:attribute name="showBackdrop" type="Boolean" default="false"/>
+    <aura:attribute name="contactIds" type="List"/>
+    <aura:attribute name="defaultValue" type="List" default="option1"/>
+    <aura:attribute name="mode" type="String" default="card"/>
+    <aura:attribute name="contactId" type="Id"/>
+    <aura:attribute name="isSelectAll" type="boolean" default="false"/>
+    
+    <!-- Creating Add Contact Modal-->
+    
+    <aura:attribute name="addContact" type="Boolean" default="false"/>
+    <aura:attribute name="cloneContactFirstName" type="String" />
+    <aura:attribute name="cloneContactLastName" type="String" />
+    <aura:attribute name="cloneEmail" type="String" />
+    <aura:attribute name="cloneMobile" type="String" />
+    <aura:attribute name="cloneSalutation" type="String" />
+    <aura:attribute name="cloneAccount" type="String" default="{!v.acc.Name}"/>
+    <aura:attribute name="selectedId" type="String" default="{!v.acc.Id}"/>
+    <aura:attribute name="clonePosition" type="String" />
+    
+     <aura:attribute type="Boolean" name="spinner"/>
+    
+    <!-- End Add Contact Modal-->
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+      <aura:if isTrue="{!v.spinner}">
+        <div aura:id="spinnerId" class="slds-spinner_container">
+            <div class="slds-spinner--brand  slds-spinner slds-spinner--large slds-is-relative" role="alert">
+                <span class="slds-assistive-text">{!$Label.c.Loading}</span>
+                <div class="slds-spinner__dot-a"></div>
+                <div class="slds-spinner__dot-b"></div>
+            </div>
+        </div>
+    </aura:if>
+    
+    <aura:if isTrue="{!v.mode == 'card'}">
+        <lightning:card iconName="standard:event" title="{! 'Create Event for '+v.acc.Name}">
+            
+            <div class="slds-card__body slds-card__body_inner">
+                <aura:if isTrue="{!v.hasContacts}">
+                    <ui:inputCheckbox value="{!v.isSelectAll}" class="myCheckbox" change="{!c.handleSelectAllContact}" aura:id="selectAll" label="Select All"/>
+                    
+                    <lightning:checkboxGroup
+                                             name="contactCheckboxGroup"
+                                             aura:id="contactCheckboxGroup"
+                                             label="Select at least one contact"
+                                             options="{! v.options }"
+                                             type="radio"
+                                             value="{!v.defaultValue}"
+                                             onchange="{!c.handleContactChange}"
+                                             />
+                    <aura:set attribute="else">
+                        This account has no related contacts. Would you like to add contacts to this account?
+                        
+                    </aura:set>
+                </aura:if>
+                <div class="slds-section">
+                    <aura:if isTrue="{!v.hasContacts}">
+                        <div class="info">
+                            <lightning:icon iconName="utility:info" size="x-small"/>
+                            <b>Please note:</b> You will only see the first contact selected in the Event Creation screen. After saving the event all selected contacts will be added.
+                        </div>
+                        <lightning:button onclick="{!c.createEvent}" class="slds-button_brand"> Continue
+                        </lightning:button>
+                        <aura:set attribute="else">
+                            <lightning:button onclick="{!c.addNewContact}" class="slds-button_brand"> Add new contact
+                            </lightning:button>
+                        </aura:set>
+                    </aura:if>
+                    <aura:if isTrue="{!v.showBackButton}">
+                        <lightning:button onclick="{!c.goBack}" class="slds-button_neutral"> Go Back
+                        </lightning:button>
+                    </aura:if>
+                    
+                </div>
+                
+            </div>
+            
+            
+        </lightning:card>
+    </aura:if>
+    
+    <aura:if isTrue="{!v.mode == 'modal'}">
+        
+        
+        <section role="dialog" tabindex="-1" aria-label="Meaningful description of the modal content"
+                 aria-modal="true"
+                 aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                            title="Close">
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                    <h2 id="modal-heading-01"
+                        class="slds-text-heading_medium slds-hyphenate"> {! 'Create Event for '+v.acc.Name+' ('+v.acc.Bill_to_Ship_to_text__c+')'}</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                    <aura:if isTrue="{!v.hasContacts}">
+                       <ui:inputCheckbox value="{!v.isSelectAll}" class="myCheckbox" change="{!c.handleSelectAllContact}" aura:id="selectAllMap" label="Select All"/>
+
+                        <lightning:checkboxGroup
+                                                 name="contactCheckboxGroup"
+                                                 aura:id="contactCheckboxGroup"
+                                                 label="Select at least one contact"
+                                                 options="{! v.options }"
+                                                 type="radio"
+                                                 value="{!v.defaultValue}"
+                                                 onchange="{!c.handleContactChange}"
+                                                 />
+                        <!--div class="info">
+                            <lightning:icon iconName="utility:info" size="x-small"/>
+                            <b>Please note:</b> You will only see the first contact selected in the Event Creation screen. After saving the event all selected contacts will be added.
+                        </div-->
+                        <aura:set attribute="else">
+                            This account has no related contacts. Would you like to add contacts to this account?
+                            
+                        </aura:set>
+                    </aura:if>
+                    
+                    
+                    <aura:if isTrue="{!v.hasContacts}">
+                        <div class="info">
+                            <lightning:icon iconName="utility:info" size="x-small"/>
+                            <b>Please note:</b> You will only see the first contact selected in the Event Creation screen. After saving the event all selected contacts will be added.
+                        </div>
+                        <lightning:button onclick="{!c.createEvent}" class="slds-button_brand"> Continue
+                        </lightning:button>
+                        <aura:set attribute="else">
+                            <lightning:button onclick="{!c.addNewContact}" class="slds-button_brand"> Add new contact
+                            </lightning:button>
+                        </aura:set>
+                    </aura:if>
+                    <aura:if isTrue="{!v.showBackButton}">
+                        <lightning:button onclick="{!c.goBack}" class="slds-button_neutral"> Go Back
+                        </lightning:button>
+                    </aura:if>
+                </div>
+                
+                <footer class="slds-modal__footer">
+                    <lightning:button onclick="{!c.createEvent}" class="slds-button_brand"> Continue
+                    </lightning:button>
+                    <aura:if isTrue="{!v.showCloseButton}">
+                        <lightning:button class="slds-m-top--medium slds-m-bottom--medium"
+                                          onclick="{!c.handleModalClose}">
+                            Close
+                        </lightning:button>
+                        <aura:set attribute="else">
+                            <lightning:button onclick="{!c.addNewContact}" class="slds-button_brand"> Add new contact
+                            </lightning:button>
+                        </aura:set>
+                    </aura:if>
+                    
+                </footer>
+            </div>
+        </section>
+        
+    </aura:if>
+    
+    <!-- **************************************************************************************************************** -->
+     
+    <aura:if isTrue="{!v.addContact}">
+        <section role="dialog" tabindex="-1" aria-label="Meaningful description of the modal content"
+                 aria-modal="true"
+                 aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                            title="Close">
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                    <h2 id="modal-heading-01"
+                        class="slds-text-heading_medium slds-hyphenate"> {! 'Create Contact for '+v.acc.Name+' ('+v.acc.Bill_to_Ship_to_text__c+')'}</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                    <lightning:select name="select1" label="Salutation" value="{!v.cloneSalutation}">
+                        <option value="Mr.">Mr.</option>
+                        <option value="Ms.">Ms.</option>
+                    </lightning:select>
+                    
+                    <lightning:input aura:id="cloneField"                      
+                                     name="cloneName" label="First Name"
+                                     value="{!v.cloneContactFirstName}" />
+                    <lightning:input aura:id="SlastName" name="SlastName" label="Last Name"
+                                     value="{!v.cloneContactLastName}" required="true"/>
+                    <lightning:select aura:id="select2" label="Contact Position" value="{!v.clonePosition}" required="true">
+                        <option value="Owner">Owner</option>
+                        <option value="Audiologist">Audiologist</option>
+                        <option value="Dispenser">Dispenser</option>
+                        <option value="Receptionist">Receptionist</option>
+                        <option value="Accounting">Accounting</option>
+                        <option value="Pediatric Audiologist">Pediatric Audiologist</option>
+                        <option value="Technician">Technician</option>
+                        <option value="General Manager">General Manager</option>
+                        <option value="BCFY">BCFY</option>
+                        <option value="Apprentice">Apprentice</option>
+                        <option value="Patient Care Coordinator">Patient Care Coordinator</option>
+                        <option value="Physician">Physician</option>
+                        <option value="Marketing">Marketing</option>
+                        <option value="Other">Other</option>
+                    </lightning:select>
+                    
+             <!--       <c:SingleSelectGenericLookup 
+                                                 objectAPIName="Account" 
+                                                 label="Account Name"
+                                                 returnFields="['Name','Bill_to_Number__c','BillingStreet','BillingCity','BillingCountry']" 
+                                                 queryFields="['Name','Bill_to_Number__c','BillingStreet','BillingCity','BillingCountry']"
+                                                 selectedId="{!v.selectedId}"
+                                                 selectedName="{!v.cloneAccount}" required="true"/> -->
+                    <lightning:input aura:id="accountSelected" name="Account" label="Account" 
+                                     value="{!v.cloneAccount}" required="true" disabled="true"/>
+                    <lightning:input aura:id="email" name="Email" label="Email" type="email"
+                                     value="{!v.cloneEmail}" />
+                    <lightning:input aura:id="phone" name="Phone" label="Phone" 
+                                     value="{!v.cloneMobile}" />
+                </div>
+                
+                 <footer class="slds-modal__footer">
+                    <lightning:button label="Cancel" onclick="{!c.handleCancel}" class="" />
+                    <lightning:button 
+                                      label="Save" 
+                                      onclick="{!c.handleSaveClones}"
+                                      variant="brand" 
+                                      class=""/>
+                </footer>
+            </div>
+        </section>
+    </aura:if>
+    
+    <!-- **************************************************************************************************************** -->
+    
+    <aura:if isTrue="{!v.showBackdrop}">
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </aura:if>
+    
+    
+</aura:component>

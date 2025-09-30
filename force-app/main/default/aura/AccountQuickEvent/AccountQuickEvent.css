@@ -1,0 +1,11 @@
+/**
+ * Created by z003d6ye on 08.04.2019.
+ */
+.THIS .info {
+    margin:5px 0px;
+}
+.THIS .myCheckbox{
+  display: inline-block;
+  float: left;
+  margin-right: 8px !important;
+}

@@ -1,0 +1,57 @@
+/**
+ * Created by z003d6ye on 22.01.2019.
+ */
+.THIS .material-icons {
+    vertical-align:middle;
+}
+
+.THIS.slds-card {
+    border:0;
+}
+
+.THIS .tableHeadLine {
+    border-radius:5px;
+    padding:5px;
+}
+
+
+.THIS .tableHeadLine:hover {
+    cursor:pointer;
+}
+
+.THIS .subtitle-icon {
+    fill: #ffbc10 !important;
+}
+
+.THIS table tr:nth-of-type(even) > td {
+    background-color: #f3f2f2;
+}
+
+.THIS {
+    margin:10px 0px;
+}
+
+.THIS td, .THIS th { padding:5px; }
+.THIS thead tr th {  }
+
+.THIS .accountGroupTitle {
+    font-weight:bold;
+    font-size:16px;
+}
+
+.THIS .grouped {
+    margin:10px 0px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    padding:10px;
+    border-radius:6px;
+    transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+}
+
+.THIS .grouped table {
+    table-layout:fixed;
+}
+
+
+.THIS .accountGroupTitle { padding:5px; }
+.THIS .accountGroupSubTitle { padding:5px; }
+.THIS .slds-table_bordered {border:0 !important;}
