@@ -1,4 +1,3 @@
-// multiSelectLookupLwc.js - DYNAMIC VERSION (like old Aura)
 import { LightningElement, api, track, wire } from 'lwc';
 import { getObjectInfo } from 'lightning/uiObjectInfoApi';
 import searchRecords from '@salesforce/apex/MultiSelectLookupController.searchRecords';
@@ -8,20 +7,49 @@ export default class MultiSelectLookupLwc extends LightningElement {
     @api label = 'Select Items';
     @api placeholder = 'Search...';
     @api iconName = 'standard:account';
-    @api fields = ''; // Additional fields to display
-    @api conditions = ''; // SOQL WHERE conditions
+    @api fields = '';
+    @api conditions = '';
     
     @track searchTerm = '';
     @track searchResults = [];
     @track selectedItems = [];
     @track showDropdown = false;
     @track isLoading = false;
+    @track error;
     
     searchTimeout;
     
-    // Wire to get object info for label
+    // Wire to get object info
     @wire(getObjectInfo, { objectApiName: '$objectApiName' })
     objectInfo;
+    
+    // FIX: Cleanup on component destroy
+    disconnectedCallback() {
+        this.clearSearchTimeout();
+    }
+    
+    // FIX: Proper error handling
+    connectedCallback() {
+        try {
+            // Initialize component
+            this.validateProps();
+        } catch (error) {
+            this.handleError(error);
+        }
+    }
+    
+    validateProps() {
+        if (!this.objectApiName) {
+            throw new Error('objectApiName is required');
+        }
+    }
+    
+    clearSearchTimeout() {
+        if (this.searchTimeout) {
+            clearTimeout(this.searchTimeout);
+            this.searchTimeout = null;
+        }
+    }
     
     get hasSelectedItems() {
         return this.selectedItems.length > 0;
@@ -34,21 +62,25 @@ export default class MultiSelectLookupLwc extends LightningElement {
     }
     
     get filteredResults() {
-        // Filter out already selected items
         return this.searchResults.filter(result => 
             !this.selectedItems.find(item => item.Id === result.Id)
         );
+    }
+    
+    get hasError() {
+        return !!this.error;
     }
     
     handleSearchChange(event) {
         this.searchTerm = event.target.value;
         
         // Clear previous timeout
-        clearTimeout(this.searchTimeout);
+        this.clearSearchTimeout();
         
         if (this.searchTerm.length >= 2) {
             this.isLoading = true;
             this.showDropdown = true;
+            this.error = null;
             
             // Debounce search
             this.searchTimeout = setTimeout(() => {
@@ -72,8 +104,9 @@ export default class MultiSelectLookupLwc extends LightningElement {
             
             this.searchResults = results;
             this.isLoading = false;
+            this.error = null;
         } catch (error) {
-            console.error('Search error:', error);
+            this.handleError(error);
             this.isLoading = false;
             this.searchResults = [];
         }
@@ -93,22 +126,30 @@ export default class MultiSelectLookupLwc extends LightningElement {
     }
     
     handleResultClick(event) {
-        const recordId = event.currentTarget.dataset.id;
-        const selectedRecord = this.searchResults.find(r => r.Id === recordId);
-        
-        if (selectedRecord) {
-            this.selectedItems = [...this.selectedItems, selectedRecord];
-            this.searchTerm = '';
-            this.searchResults = [];
-            this.showDropdown = false;
-            this.fireChangeEvent();
+        try {
+            const recordId = event.currentTarget.dataset.id;
+            const selectedRecord = this.searchResults.find(r => r.Id === recordId);
+            
+            if (selectedRecord) {
+                this.selectedItems = [...this.selectedItems, selectedRecord];
+                this.searchTerm = '';
+                this.searchResults = [];
+                this.showDropdown = false;
+                this.fireChangeEvent();
+            }
+        } catch (error) {
+            this.handleError(error);
         }
     }
     
     handleRemove(event) {
-        const recordId = event.detail.item.name;
-        this.selectedItems = this.selectedItems.filter(item => item.Id !== recordId);
-        this.fireChangeEvent();
+        try {
+            const recordId = event.detail.item.name;
+            this.selectedItems = this.selectedItems.filter(item => item.Id !== recordId);
+            this.fireChangeEvent();
+        } catch (error) {
+            this.handleError(error);
+        }
     }
     
     fireChangeEvent() {
@@ -117,16 +158,51 @@ export default class MultiSelectLookupLwc extends LightningElement {
         }));
     }
     
+    handleError(error) {
+        this.error = this.reduceErrors(error);
+        console.error('MultiSelectLookup Error:', this.error);
+        
+        // Optionally show toast
+        this.dispatchEvent(new CustomEvent('error', {
+            detail: { error: this.error }
+        }));
+    }
+    
+    reduceErrors(error) {
+        if (!error) return 'Unknown error';
+        
+        if (Array.isArray(error.body)) {
+            return error.body.map(e => e.message).join(', ');
+        } else if (error.body?.message) {
+            return error.body.message;
+        } else if (error.message) {
+            return error.message;
+        }
+        
+        return 'Unknown error occurred';
+    }
+    
     @api
     clear() {
         this.selectedItems = [];
         this.searchTerm = '';
         this.searchResults = [];
+        this.showDropdown = false;
+        this.error = null;
+        this.clearSearchTimeout();
         this.fireChangeEvent();
     }
     
     @api
     getSelectedIds() {
         return this.selectedItems.map(item => item.Id);
+    }
+    
+    @api
+    setSelectedItems(items) {
+        if (Array.isArray(items)) {
+            this.selectedItems = items;
+            this.fireChangeEvent();
+        }
     }
 }

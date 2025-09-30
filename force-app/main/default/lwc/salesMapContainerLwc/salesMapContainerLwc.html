@@ -1,9 +1,19 @@
-<!-- salesMapContainerLwc.html - FINAL COMPLETE VERSION -->
+<!-- salesMapContainerLwc.html - FIXED HTML SYNTAX -->
 <template>
     <div class="sales-map-container">
+        <!-- Error Boundary Display -->
+        <template if:true={hasError}>
+            <div class="error-message">
+                <lightning-icon icon-name="utility:error" size="small"></lightning-icon>
+                {errorMessage}
+            </div>
+        </template>
+
         <!-- Loading Spinner -->
         <template if:true={isLoading}>
-            <lightning-spinner variant="brand" alternative-text="Loading accounts..."></lightning-spinner>
+            <div class="map-loading-overlay">
+                <lightning-spinner variant="brand" alternative-text="Loading accounts..."></lightning-spinner>
+            </div>
         </template>
 
         <div class="map-body">
@@ -31,7 +41,7 @@
                     <!-- Map Component with Controls -->
                     <div class="map-wrapper">
                         <lightning-map
-                            map-markers={mapMarkers}
+                            map-markers={allMapMarkers}
                             zoom-level={zoomLevel}
                             center={mapCenter}
                             list-view="hidden"
@@ -48,6 +58,12 @@
                                 <span class="tooltip">Fit map to markers</span>
                             </button>
                             
+                            <!-- Nearby Places Button -->
+                            <button class="map-control-button" onclick={toggleNearbyPlaces} title="Nearby places">
+                                <lightning-icon icon-name="utility:location" size="x-small"></lightning-icon>
+                                <span class="tooltip">Nearby places</span>
+                            </button>
+                            
                             <!-- Main Account Toggle Switch -->
                             <div class="switch-container">
                                 <label class="switch">
@@ -59,6 +75,90 @@
                                 </label>
                             </div>
                         </div>
+
+                        <!-- Clustering Controls -->
+                        <template if:true={clusteringEnabled}>
+                            <div class="clustering-controls">
+                                <div class="clustering-button active">
+                                    <lightning-icon icon-name="utility:cluster" size="xx-small"></lightning-icon>
+                                    <span>Clustering Active</span>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Heatmap Controls -->
+                        <template if:true={heatmapEnabled}>
+                            <div class="heatmap-controls">
+                                <div class="clustering-button active">
+                                    <lightning-icon icon-name="utility:world" size="xx-small"></lightning-icon>
+                                    <span>Heatmap Active</span>
+                                </div>
+                                <div class="heatmap-slider">
+                                    <lightning-slider
+                                        label="Intensity"
+                                        min="1"
+                                        max="100"
+                                        value={heatmapIntensity}
+                                        onchange={handleHeatmapIntensityChange}
+                                        size="small">
+                                    </lightning-slider>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Nearby Places Panel -->
+                        <template if:true={nearbyPlacesVisible}>
+                            <div class="nearby-panel">
+                                <div class="nearby-header">Nearby Places</div>
+                                <div class="nearby-buttons">
+                                    <button 
+                                        class={nearbyButtonHotelsClass}
+                                        onclick={handleToggleHotels}>
+                                        <lightning-icon icon-name="custom:custom19" size="xx-small"></lightning-icon>
+                                        <span>Hotels</span>
+                                    </button>
+                                    
+                                    <button 
+                                        class={nearbyButtonRestaurantsClass}
+                                        onclick={handleToggleRestaurants}>
+                                        <lightning-icon icon-name="custom:custom24" size="xx-small"></lightning-icon>
+                                        <span>Restaurants</span>
+                                    </button>
+                                    
+                                    <button 
+                                        class={nearbyButtonParkingClass}
+                                        onclick={handleToggleParking}>
+                                        <lightning-icon icon-name="custom:custom76" size="xx-small"></lightning-icon>
+                                        <span>Parking</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Geolocation Update Modal -->
+                        <template if:true={showGeolocationModal}>
+                            <div class="geolocation-modal-backdrop"></div>
+                            <div class="geolocation-modal">
+                                <h3>Update Account Location</h3>
+                                <p>You moved the marker for <strong>{draggedAccountName}</strong>.</p>
+                                <p>Would you like to save this new location?</p>
+                                
+                                <div class="slds-m-top_medium">
+                                    <lightning-button
+                                        label="Save New Location"
+                                        variant="brand"
+                                        onclick={handleConfirmGeolocationUpdate}
+                                        class="slds-m-right_small">
+                                    </lightning-button>
+                                    
+                                    <lightning-button
+                                        label="Cancel"
+                                        variant="neutral"
+                                        onclick={handleCancelGeolocationUpdate}>
+                                    </lightning-button>
+                                </div>
+                            </div>
+                        </template>
 
                         <!-- Legend -->
                         <c-sales-map-legend

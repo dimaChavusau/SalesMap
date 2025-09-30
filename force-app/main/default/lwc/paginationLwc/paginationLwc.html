@@ -1,19 +1,42 @@
-<!-- paginationLwc.html - FIXED -->
+<!-- paginationLwc.html - Enhanced with prev/next buttons -->
 <template>
-    <div class="pagination-container">
-        <div class="pagination">
-            <template for:each={pageList} for:item="page">
-                <button 
-                    key={page.value}
-                    class={page.class}
-                    data-page={page.value}
-                    onclick={handlePageClick}>
-                    {page.label}
-                </button>
-            </template>
+    <template if:true={max}>
+        <div class="pagination-container">
+            <div class="navigation-buttons">
+                <lightning-button
+                    label="Previous"
+                    icon-name="utility:chevronleft"
+                    onclick={handlePrevious}
+                    disabled={hasPrevious}
+                    variant="neutral">
+                </lightning-button>
+                
+                <lightning-button
+                    label="Next"
+                    icon-name="utility:chevronright"
+                    icon-position="right"
+                    onclick={handleNext}
+                    disabled={hasNext}
+                    variant="neutral">
+                </lightning-button>
+            </div>
+            
+            <div class="pagination">
+                <template for:each={pageList} for:item="page">
+                    <button 
+                        key={page.value}
+                        class={page.class}
+                        data-page={page.value}
+                        onclick={handlePageClick}
+                        disabled={page.label === '...'}>
+                        {page.label}
+                    </button>
+                </template>
+            </div>
+            
+            <div class="page-indicator">
+                Displaying {minRec} to {maxRec} of {max} records (Page {currentPage} of {totalPages})
+            </div>
         </div>
-        <div class="page-indicator">
-            Displaying {minRec} to {maxRec} records on page {currentPage}
-        </div>
-    </div>
+    </template>
 </template>

@@ -1,24 +1,37 @@
-<!-- accountDataTable.html - FIXED -->
+<!-- accountDataTable.html - ENHANCED -->
 <template>
     <lightning-card title={title} icon-name="standard:account">
         <div slot="actions">
             <template if:true={showDownloadButton}>
                 <lightning-button
-                    label="Download"
+                    label="Download CSV"
+                    icon-name="utility:download"
                     onclick={handleExport}>
                 </lightning-button>
             </template>
         </div>
         
         <div class="slds-p-horizontal_medium">
-            <lightning-input
-                type="search"
-                label="Search"
-                placeholder="Search..."
-                value={searchKey}
-                onchange={handleSearch}>
-            </lightning-input>
+            <!-- Error Display -->
+            <template if:true={hasError}>
+                <div class="slds-notify slds-notify_alert slds-alert_error slds-m-bottom_small" role="alert">
+                    <lightning-icon icon-name="utility:error" size="x-small" variant="inverse"></lightning-icon>
+                    <h2 class="slds-m-left_x-small">{error}</h2>
+                </div>
+            </template>
             
+            <!-- Search -->
+            <div class="slds-m-bottom_small">
+                <lightning-input
+                    type="search"
+                    label="Search"
+                    placeholder="Search accounts..."
+                    value={searchKey}
+                    onchange={handleSearch}>
+                </lightning-input>
+            </div>
+            
+            <!-- Pagination -->
             <c-pagination-lwc
                 current-page={currentPage}
                 max={totalRecords}
@@ -26,43 +39,84 @@
                 onpagechange={handlePageChange}>
             </c-pagination-lwc>
             
+            <!-- Table -->
             <div class="table-container">
-                <table class="slds-table slds-table_bordered">
+                <table class="slds-table slds-table_bordered slds-table_cell-buffer">
                     <thead>
-                        <tr>
-                            <th>Action</th>
+                        <tr class="slds-line-height_reset">
+                            <th scope="col">
+                                <div class="slds-truncate" title="Action">Action</div>
+                            </th>
                             <template for:each={columns} for:item="col">
-                                <th key={col.fieldName}>{col.label}</th>
+                                <th key={col.fieldName} scope="col">
+                                    <template if:true={col.sortable}>
+                                        <a 
+                                            class="slds-th__action slds-text-link_reset" 
+                                            href="javascript:void(0);"
+                                            data-field={col.fieldName}
+                                            onclick={handleSort}>
+                                            <span class="slds-truncate" title={col.label}>
+                                                {col.label} {getSortIcon}
+                                            </span>
+                                        </a>
+                                    </template>
+                                    <template if:false={col.sortable}>
+                                        <div class="slds-truncate" title={col.label}>{col.label}</div>
+                                    </template>
+                                </th>
                             </template>
                         </tr>
                     </thead>
                     <tbody>
-                        <template for:each={displayRows} for:item="row">
-                            <tr key={row.id}>
-                                <td>
-                                    <lightning-button-icon
-                                        icon-name="utility:location"
-                                        alternative-text="Open Account"
-                                        title="Open Account"
-                                        onclick={handleRowAction}
-                                        data-id={row.id}>
-                                    </lightning-button-icon>
-                                </td>
-                                <template for:each={row.cells} for:item="cell">
-                                    <td key={cell.key}>
-                                        <template if:true={cell.isHtml}>
-                                            <lightning-formatted-rich-text value={cell.value}></lightning-formatted-rich-text>
-                                        </template>
-                                        <template if:false={cell.isHtml}>
-                                            {cell.value}
-                                        </template>
+                        <template if:true={displayRows.length}>
+                            <template for:each={displayRows} for:item="row">
+                                <tr key={row.id} class="slds-hint-parent">
+                                    <td>
+                                        <lightning-button-icon
+                                            icon-name="utility:open"
+                                            alternative-text="Open Account"
+                                            title="Open Account"
+                                            onclick={handleRowAction}
+                                            data-id={row.id}>
+                                        </lightning-button-icon>
                                     </td>
-                                </template>
+                                    <template for:each={row.cells} for:item="cell">
+                                        <td key={cell.key}>
+                                            <template if:true={cell.isHtml}>
+                                                <lightning-formatted-rich-text 
+                                                    value={cell.value}>
+                                                </lightning-formatted-rich-text>
+                                            </template>
+                                            <template if:false={cell.isHtml}>
+                                                <div class="slds-truncate" title={cell.value}>
+                                                    {cell.value}
+                                                </div>
+                                            </template>
+                                        </td>
+                                    </template>
+                                </tr>
+                            </template>
+                        </template>
+                        
+                        <template if:false={displayRows.length}>
+                            <tr>
+                                <td colspan="100" class="slds-text-align_center slds-p-vertical_large">
+                                    <lightning-icon icon-name="utility:info" size="small"></lightning-icon>
+                                    <p class="slds-m-top_small">No records to display</p>
+                                </td>
                             </tr>
                         </template>
                     </tbody>
                 </table>
             </div>
+            
+            <!-- Bottom Pagination -->
+            <c-pagination-lwc
+                current-page={currentPage}
+                max={totalRecords}
+                records-per-page={recordsPerPage}
+                onpagechange={handlePageChange}>
+            </c-pagination-lwc>
         </div>
     </lightning-card>
 </template>

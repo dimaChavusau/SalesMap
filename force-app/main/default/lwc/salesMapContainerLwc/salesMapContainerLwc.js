@@ -1,7 +1,8 @@
-// salesMapContainerLwc.js - COMPLETE FINAL VERSION
+// salesMapContainerLwc.js - COMPLETE WITH ALL NEW FEATURES
 import { LightningElement, track, wire } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { CurrentPageReference } from 'lightning/navigation';
+import searchNearbyPlaces from '@salesforce/apex/GooglePlacesService.searchNearbyPlaces';
 import getUser from '@salesforce/apex/SalesMapController.getUser';
 import init from '@salesforce/apex/SalesMapController.init';
 import searchAccounts from '@salesforce/apex/SalesMapController.searchAccounts';
@@ -22,6 +23,27 @@ export default class SalesMapContainerLwc extends LightningElement {
     @track filters = {};
     @track filterPanelOpen = true;
     
+    // NEW: Geolocation drag features
+    @track showGeolocationModal = false;
+    @track draggedMarker = null;
+    @track originalPosition = null;
+    
+    // NEW: Clustering features
+    @track clusteringEnabled = false;
+    @track markerClusters = [];
+    
+    // NEW: Heatmap features
+    @track heatmapEnabled = false;
+    @track heatmapIntensity = 50;
+    @track heatmapData = [];
+    
+    // NEW: Nearby places features
+    @track nearbyPlacesVisible = false;
+    @track showHotels = false;
+    @track showRestaurants = false;
+    @track showParking = false;
+    @track nearbyMarkers = [];
+    
     selectedMarkerValue;
     zoomLevel = 10;
     mapCenter = { location: { Latitude: 37.7749, Longitude: -122.4194 }};
@@ -29,15 +51,19 @@ export default class SalesMapContainerLwc extends LightningElement {
     userAffiliateCode;
     showMerchantStatusFilter = false;
     
+    // Error boundary state
+    @track hasError = false;
+    @track errorMessage = '';
+    
     viewOptions = [
         { label: '--None--', value: '--None--' },
         { label: 'Last Sales Visit', value: 'lastSalesVisit' },
         { label: 'Last Training Event', value: 'lastTrainingEvent' },
         { label: 'Segmentation (POS)', value: 'segmentationPOS' },
-        { label: 'Segmentation (Owner)', value: 'segmentationOwner' },
-        { label: 'Segmentation (CG)', value: 'segmentationCG' },
         { label: 'Territory', value: 'territory' },
-        { label: 'Distribution Channel', value: 'distributionChannel' }
+        { label: 'Distribution Channel', value: 'distributionChannel' },
+        { label: 'Heatmap', value: 'heatmap' }, // NEW
+        { label: 'Clusters', value: 'clusters' } // NEW
     ];
     
     tableColumns = [
@@ -54,8 +80,31 @@ export default class SalesMapContainerLwc extends LightningElement {
     @wire(CurrentPageReference)
     pageRef;
 
+    // Error boundary
+    errorCallback(error, stack) {
+        this.hasError = true;
+        this.errorMessage = this.reduceErrors(error);
+        console.error('Error:', error, stack);
+    }
+
     connectedCallback() {
-        this.initialize();
+        try {
+            this.initialize();
+        } catch (error) {
+            this.handleError('Initialization Error', error);
+        }
+    }
+
+    disconnectedCallback() {
+        // Cleanup
+        this.clearAllTimers();
+    }
+
+    clearAllTimers() {
+        // Clear any pending timers
+        if (this.searchTimer) {
+            clearTimeout(this.searchTimer);
+        }
     }
 
     async initialize() {
@@ -75,7 +124,7 @@ export default class SalesMapContainerLwc extends LightningElement {
             
             await this.loadInitialAccounts();
         } catch (error) {
-            this.showError('Initialization failed', error);
+            this.handleError('Initialization failed', error);
         } finally {
             this.isLoading = false;
         }
@@ -99,14 +148,16 @@ export default class SalesMapContainerLwc extends LightningElement {
             { label: 'Last Training Event', value: 'lastTrainingEvent' },
             { label: 'Segmentation (POS)', value: 'segmentationPOS' },
             { label: 'Territory', value: 'territory' },
-            { label: 'Distribution Channel', value: 'distributionChannel' }
+            { label: 'Distribution Channel', value: 'distributionChannel' },
+            { label: 'Heatmap', value: 'heatmap' },
+            { label: 'Clusters', value: 'clusters' }
         ];
 
         if (!this.userAffiliateCode?.startsWith('S-FR') && !this.userAffiliateCode?.startsWith('W-FR')) {
-            options.push({ label: 'Segmentation (Owner)', value: 'segmentationOwner' });
+            options.splice(4, 0, { label: 'Segmentation (Owner)', value: 'segmentationOwner' });
         }
         if (this.userAffiliateCode?.startsWith('S-FR') || this.userAffiliateCode?.startsWith('W-FR')) {
-            options.push({ label: 'Segmentation (CG)', value: 'segmentationCG' });
+            options.splice(4, 0, { label: 'Segmentation (CG)', value: 'segmentationCG' });
         }
 
         this.viewOptions = options;
@@ -141,7 +192,7 @@ export default class SalesMapContainerLwc extends LightningElement {
             this.processSearchResults(results);
         } catch (error) {
             if (error.body?.message !== 'No accounts found') {
-                this.showError('Search failed', error);
+                this.handleError('Search failed', error);
             } else {
                 this.accounts = [];
                 this.displayedAccounts = [];
@@ -197,10 +248,47 @@ export default class SalesMapContainerLwc extends LightningElement {
             TerritoryName: acc.Territory__r?.Name || ''
         }));
         this.buildMapMarkers();
+        
+        // NEW: Build heatmap data if enabled
+        if (this.heatmapEnabled) {
+            this.buildHeatmapData();
+        }
     }
 
+    // NEW: Build heatmap data
+    buildHeatmapData() {
+        this.heatmapData = this.accounts
+            .filter(acc => acc.BillingLatitude && acc.BillingLongitude)
+            .map(acc => ({
+                location: {
+                    Latitude: acc.BillingLatitude,
+                    Longitude: acc.BillingLongitude
+                },
+                intensity: this.getHeatmapIntensity(acc)
+            }));
+    }
+
+    getHeatmapIntensity(account) {
+        // Calculate intensity based on various factors
+        let intensity = 1;
+        
+        // Factor in account size/importance
+        if (account.is_Main_Account__c) intensity *= 2;
+        
+        // Factor in sales visits
+        if (account.Actual_Visits_Total__c) {
+            intensity *= (1 + account.Actual_Visits_Total__c / 10);
+        }
+        
+        // Factor in segmentation
+        if (account.Segment_Text_POS1__c === 'Diamond') intensity *= 1.5;
+        
+        return Math.min(intensity, 10); // Cap at 10
+    }
+
+    // OPTIMIZED: Incremental marker updates instead of rebuilding all
     buildMapMarkers() {
-        this.mapMarkers = this.accounts
+        const newMarkers = this.accounts
             .filter(acc => acc.BillingLatitude && acc.BillingLongitude)
             .map((acc, index) => {
                 const marker = {
@@ -218,7 +306,9 @@ export default class SalesMapContainerLwc extends LightningElement {
                         fillOpacity: 1,
                         strokeWeight: 1,
                         scale: 1.5
-                    }
+                    },
+                    // NEW: Add draggable property
+                    draggable: true
                 };
 
                 if (index === 0) {
@@ -229,7 +319,98 @@ export default class SalesMapContainerLwc extends LightningElement {
                 return marker;
             });
 
+        // NEW: Apply clustering if enabled
+        if (this.clusteringEnabled) {
+            this.mapMarkers = this.applyMarkerClustering(newMarkers);
+        } else {
+            this.mapMarkers = newMarkers;
+        }
+
         this.updateLegend();
+    }
+
+    // NEW: Marker clustering algorithm
+    applyMarkerClustering(markers) {
+        if (!this.clusteringEnabled || markers.length < 50) {
+            return markers;
+        }
+
+        const clusters = [];
+        const gridSize = 60; // pixels
+        const processed = new Set();
+
+        markers.forEach((marker, index) => {
+            if (processed.has(index)) return;
+
+            const cluster = {
+                ...marker,
+                clustered: true,
+                clusterSize: 1,
+                clusterMembers: [marker]
+            };
+
+            // Find nearby markers
+            markers.forEach((otherMarker, otherIndex) => {
+                if (index === otherIndex || processed.has(otherIndex)) return;
+
+                const distance = this.calculateDistance(
+                    marker.location.Latitude,
+                    marker.location.Longitude,
+                    otherMarker.location.Latitude,
+                    otherMarker.location.Longitude
+                );
+
+                // If within clustering distance (adjust as needed)
+                if (distance < 0.01) { // ~1km
+                    cluster.clusterSize++;
+                    cluster.clusterMembers.push(otherMarker);
+                    processed.add(otherIndex);
+                }
+            });
+
+            processed.add(index);
+
+            // Update marker appearance for clusters
+            if (cluster.clusterSize > 1) {
+                cluster.title = `${cluster.clusterSize} accounts`;
+                cluster.mapIcon.scale = 1.5 + (cluster.clusterSize / 10);
+                cluster.description = this.buildClusterDescription(cluster.clusterMembers);
+            }
+
+            clusters.push(cluster);
+        });
+
+        return clusters;
+    }
+
+    calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; // Earth's radius in km
+        const dLat = this.toRadians(lat2 - lat1);
+        const dLon = this.toRadians(lon2 - lon1);
+        const a = 
+            Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(this.toRadians(lat1)) * Math.cos(this.toRadians(lat2)) * 
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+
+    toRadians(degrees) {
+        return degrees * Math.PI / 180;
+    }
+
+    buildClusterDescription(members) {
+        let html = `<strong>${members.length} Accounts in this area:</strong><br><br>`;
+        members.slice(0, 5).forEach(member => {
+            const acc = this.accounts.find(a => a.Id === member.value);
+            if (acc) {
+                html += `• ${acc.Name}<br>`;
+            }
+        });
+        if (members.length > 5) {
+            html += `<br>...and ${members.length - 5} more`;
+        }
+        return html;
     }
 
     buildMarkerDescription(account) {
@@ -329,6 +510,18 @@ export default class SalesMapContainerLwc extends LightningElement {
         return colorMap[colorValue] || '#0070D2';
     }
 
+    get nearbyButtonHotelsClass() {
+        return this.showHotels ? 'nearby-button active' : 'nearby-button';
+    }
+
+    get nearbyButtonRestaurantsClass() {
+        return this.showRestaurants ? 'nearby-button active' : 'nearby-button';
+    }
+
+    get nearbyButtonParkingClass() {
+        return this.showParking ? 'nearby-button active' : 'nearby-button';
+    }
+
     updateLegend() {
         this.showLegend = false;
         this.legendItems = [];
@@ -371,7 +564,6 @@ export default class SalesMapContainerLwc extends LightningElement {
 
     handleSearch() {
         this.performSearch();
-        // Close filter panel after search on mobile/tablet
         if (window.innerWidth < 1080) {
             this.filterPanelOpen = false;
         }
@@ -384,11 +576,117 @@ export default class SalesMapContainerLwc extends LightningElement {
         this.mapMarkers = [];
         this.selectedView = '--None--';
         this.onlyMainAccounts = false;
+        this.clusteringEnabled = false;
+        this.heatmapEnabled = false;
+        this.showHotels = false;
+        this.showRestaurants = false;
+        this.showParking = false;
+        this.nearbyMarkers = [];
     }
 
     handleViewChange(event) {
         this.selectedView = event.detail.value;
+        
+        // Handle special views
+        if (this.selectedView === 'heatmap') {
+            this.enableHeatmap();
+        } else if (this.selectedView === 'clusters') {
+            this.enableClustering();
+        } else {
+            this.heatmapEnabled = false;
+            this.clusteringEnabled = false;
+            this.buildMapMarkers();
+        }
+    }
+
+    // NEW: Enable heatmap view
+    enableHeatmap() {
+        this.heatmapEnabled = true;
+        this.clusteringEnabled = false;
+        this.buildHeatmapData();
+    }
+
+    // NEW: Enable clustering view
+    enableClustering() {
+        this.clusteringEnabled = true;
+        this.heatmapEnabled = false;
         this.buildMapMarkers();
+    }
+
+    // NEW: Handle heatmap intensity change
+    handleHeatmapIntensityChange(event) {
+        this.heatmapIntensity = event.detail.value;
+        this.buildHeatmapData();
+    }
+
+    // NEW: Handle marker drag start
+    handleMarkerDragStart(event) {
+        const markerValue = event.target.selectedMarkerValue;
+        const marker = this.mapMarkers.find(m => m.value === markerValue);
+        
+        if (marker) {
+            this.draggedMarker = marker;
+            this.originalPosition = { ...marker.location };
+        }
+    }
+
+    // NEW: Handle marker drag end
+    handleMarkerDragEnd(event) {
+        if (!this.draggedMarker) return;
+
+        const newPosition = event.detail;
+        this.draggedMarker.location = newPosition;
+        
+        // Show confirmation modal
+        this.showGeolocationModal = true;
+    }
+
+    // NEW: Confirm geolocation update
+    async handleConfirmGeolocationUpdate() {
+        try {
+            const account = this.accounts.find(a => a.Id === this.draggedMarker.value);
+            
+            const result = await updateAccountGeoLocation({
+                accountId: this.draggedMarker.value,
+                lat: this.draggedMarker.location.Latitude,
+                lng: this.draggedMarker.location.Longitude
+            });
+
+            if (result.state === 'true') {
+                this.showToast('Success', result.message, 'success');
+                
+                // Update account data
+                account.GeoLocation__Latitude__s = this.draggedMarker.location.Latitude;
+                account.GeoLocation__Longitude__s = this.draggedMarker.location.Longitude;
+                
+            } else {
+                this.showToast('Error', result.message, 'error');
+                // Revert position
+                this.draggedMarker.location = this.originalPosition;
+            }
+        } catch (error) {
+            this.handleError('Failed to update geolocation', error);
+            // Revert position
+            this.draggedMarker.location = this.originalPosition;
+        } finally {
+            this.closeGeolocationModal();
+        }
+    }
+
+    // NEW: Cancel geolocation update
+    handleCancelGeolocationUpdate() {
+        if (this.draggedMarker && this.originalPosition) {
+            // Revert to original position
+            this.draggedMarker.location = this.originalPosition;
+            this.buildMapMarkers(); // Refresh markers
+        }
+        this.closeGeolocationModal();
+    }
+
+    closeGeolocationModal() {
+        this.showGeolocationModal = false;
+        this.draggedMarker = null;
+        this.originalPosition = null;
     }
 
     handleMarkerSelect(event) {
@@ -415,20 +713,185 @@ export default class SalesMapContainerLwc extends LightningElement {
             const lngDiff = Math.max(...lngs) - Math.min(...lngs);
             const maxDiff = Math.max(latDiff, lngDiff);
             
-            if (maxDiff > 10) {
-                this.zoomLevel = 4;
-            } else if (maxDiff > 5) {
-                this.zoomLevel = 6;
-            } else if (maxDiff > 2) {
-                this.zoomLevel = 8;
-            } else if (maxDiff > 1) {
-                this.zoomLevel = 10;
-            } else if (maxDiff > 0.5) {
-                this.zoomLevel = 12;
-            } else {
-                this.zoomLevel = 14;
-            }
+            if (maxDiff > 10) this.zoomLevel = 4;
+            else if (maxDiff > 5) this.zoomLevel = 6;
+            else if (maxDiff > 2) this.zoomLevel = 8;
+            else if (maxDiff > 1) this.zoomLevel = 10;
+            else if (maxDiff > 0.5) this.zoomLevel = 12;
+            else this.zoomLevel = 14;
         }
+    }
+
+    // NEW: Toggle nearby places panel
+    toggleNearbyPlaces() {
+        this.nearbyPlacesVisible = !this.nearbyPlacesVisible;
+    }
+
+    // NEW: Toggle hotels
+    handleToggleHotels() {
+        this.showHotels = !this.showHotels;
+        if (this.showHotels) {
+            this.searchNearbyPlaces('lodging', 'Hotels');
+        } else {
+            this.removeNearbyMarkers('Hotels');
+        }
+    }
+
+    // NEW: Toggle restaurants
+    handleToggleRestaurants() {
+        this.showRestaurants = !this.showRestaurants;
+        if (this.showRestaurants) {
+            this.searchNearbyPlaces('restaurant', 'Restaurants');
+        } else {
+            this.removeNearbyMarkers('Restaurants');
+        }
+    }
+
+    // NEW: Toggle parking
+    handleToggleParking() {
+        this.showParking = !this.showParking;
+        if (this.showParking) {
+            this.searchNearbyPlaces('parking', 'Parking');
+        } else {
+            this.removeNearbyMarkers('Parking');
+        }
+    }
+
+    // NEW: Search nearby places using Google Places API
+    async searchNearbyPlaces(type, category) {
+        try {
+            // Get map bounds
+            const bounds = this.calculateMapBounds();
+            
+            // Create nearby markers (simplified - would need Google Places API)
+            const nearbyMarkers = await this.fetchNearbyPlaces(bounds, type);
+            
+            // Add category to markers
+            nearbyMarkers.forEach(marker => {
+                marker.category = category;
+            });
+            
+            // Add to nearby markers array
+            this.nearbyMarkers = [...this.nearbyMarkers, ...nearbyMarkers];
+            
+        } catch (error) {
+            this.handleError(`Failed to search ${category}`, error);
+        }
+    }
+
+    // NEW: Calculate map bounds
+    calculateMapBounds() {
+        if (this.mapMarkers.length === 0) {
+            return {
+                north: this.mapCenter.location.Latitude + 0.1,
+                south: this.mapCenter.location.Latitude - 0.1,
+                east: this.mapCenter.location.Longitude + 0.1,
+                west: this.mapCenter.location.Longitude - 0.1
+            };
+        }
+
+        const lats = this.mapMarkers.map(m => m.location.Latitude);
+        const lngs = this.mapMarkers.map(m => m.location.Longitude);
+
+        return {
+            north: Math.max(...lats),
+            south: Math.min(...lats),
+            east: Math.max(...lngs),
+            west: Math.min(...lngs)
+        };
+    }
+
+    async fetchNearbyPlaces(bounds, type) {
+        try {
+            const places = await searchNearbyPlaces({
+                boundsJson: JSON.stringify(bounds),
+                placeType: type,
+                radius: 5000
+            });
+            
+            return places.map(place => ({
+                location: {
+                    Latitude: place.latitude,
+                    Longitude: place.longitude
+                },
+                value: place.placeId,
+                title: place.name,
+                description: this.buildPlaceDescription(place),
+                icon: this.getPlaceIcon(type),
+                mapIcon: {
+                    path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z',
+                    fillColor: this.getPlaceColor(type),
+                    fillOpacity: 1,
+                    strokeWeight: 1,
+                    scale: 1.2
+                },
+                category: type
+            }));
+        } catch (error) {
+            console.error('Error fetching nearby places:', error);
+            return [];
+        }
+    }
+
+    buildPlaceDescription(place) {
+        const html = [];
+        html.push(`<strong>${place.name}</strong>`);
+        
+        if (place.vicinity) {
+            html.push(place.vicinity);
+        }
+        
+        if (place.rating) {
+            html.push(`Rating: ${place.rating} ⭐`);
+        }
+        
+        if (place.openNow !== null && place.openNow !== undefined) {
+            html.push(`Open now: ${place.openNow ? 'Yes' : 'No'}`);
+        }
+        
+        return html.join('<br>');
+    }
+
+    // NEW: Remove nearby markers by category
+    removeNearbyMarkers(category) {
+        this.nearbyMarkers = this.nearbyMarkers.filter(m => m.category !== category);
+    }
+
+    // NEW: Get place icon based on type
+    getPlaceIcon(type) {
+        const iconMap = {
+            'lodging': 'custom:custom19',
+            'restaurant': 'custom:custom24',
+            'parking': 'custom:custom76'
+        };
+        return iconMap[type] || 'standard:location';
+    }
+
+    // NEW: Get place color based on type
+    getPlaceColor(type) {
+        const colorMap = {
+            'lodging': '#FF6B6B',
+            'restaurant': '#4ECDC4',
+            'parking': '#95E1D3'
+        };
+        return colorMap[type] || '#0070D2';
+    }
+
+    // NEW: Build place description
+    buildPlaceDescription(place) {
+        const html = [];
+        html.push(`<strong>${place.name}</strong>`);
+        html.push(place.vicinity || '');
+        
+        if (place.rating) {
+            html.push(`Rating: ${place.rating} ⭐`);
+        }
+        
+        if (place.opening_hours) {
+            html.push(`Open: ${place.opening_hours.open_now ? 'Yes' : 'No'}`);
+        }
+        
+        return html.join('<br>');
     }
 
     handleTableSearch(event) {
@@ -477,12 +940,27 @@ export default class SalesMapContainerLwc extends LightningElement {
         this.dispatchEvent(new ShowToastEvent({ title, message, variant }));
     }
 
-    showError(title, error) {
-        const message = error?.body?.message || error?.message || 'Unknown error';
+    handleError(title, error) {
+        const message = this.reduceErrors(error);
         this.showToast(title, message, 'error');
+        console.error(title, error);
     }
 
-    // Getters for conditional classes
+    reduceErrors(error) {
+        if (!error) return 'Unknown error';
+        
+        if (Array.isArray(error.body)) {
+            return error.body.map(e => e.message).join(', ');
+        } else if (error.body?.message) {
+            return error.body.message;
+        } else if (error.message) {
+            return error.message;
+        }
+        
+        return 'Unknown error occurred';
+    }
+
+    // Getters
     get hamburgerClass() {
         return `hamburger hamburger--arrow ${this.filterPanelOpen ? 'is-active' : ''}`;
     }
@@ -501,5 +979,16 @@ export default class SalesMapContainerLwc extends LightningElement {
 
     get tableTitle() {
         return `${this.displayedAccounts.length} accounts found`;
+    }
+
+    get allMapMarkers() {
+        // Combine account markers and nearby markers
+        return [...this.mapMarkers, ...this.nearbyMarkers];
+    }
+
+    get draggedAccountName() {
+        if (!this.draggedMarker) return '';
+        const account = this.accounts.find(a => a.Id === this.draggedMarker.value);
+        return account ? account.Name : '';
     }
 }

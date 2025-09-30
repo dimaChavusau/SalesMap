@@ -1,6 +1,10 @@
-<!-- multiSelectLookupLwc.html -->
+<!-- multiSelectLookupLwc.html - With error handling -->
 <template>
     <div class="slds-form-element">
+        <label class="slds-form-element__label" if:true={label}>
+            {label}
+        </label>
+        
         <div class="slds-form-element__control">
             <div class="slds-combobox_container">
                 <div class={comboboxClass} role="combobox" aria-expanded={showDropdown} aria-haspopup="listbox">
@@ -76,6 +80,13 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Error Message -->
+        <template if:true={hasError}>
+            <div class="slds-form-element__help slds-text-color_error">
+                {error}
+            </div>
+        </template>
         
         <!-- Selected Pills -->
         <template if:true={hasSelectedItems}>
