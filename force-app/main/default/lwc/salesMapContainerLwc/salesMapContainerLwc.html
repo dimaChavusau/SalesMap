@@ -1,0 +1,113 @@
+<template>
+    <div class="sales-map-container">
+        <!-- Loading Spinner -->
+        <template if:true={isLoading}>
+            <lightning-spinner variant="brand" alternative-text="Loading accounts..."></lightning-spinner>
+        </template>
+
+        <div class="map-body">
+            <!-- Toggle Button for Filter Panel -->
+            <button class={hamburgerClass} type="button" onclick={toggleFilterPanel}>
+                <span class="hamburger-box">
+                    <span class="hamburger-inner"></span>
+                </span>
+            </button>
+
+            <!-- Filter Panel -->
+            <div class={filterContainerClass}>
+                <c-sales-map-filters
+                    user-affiliate-code={userAffiliateCode}
+                    show-merchant-status-filter={showMerchantStatusFilter}
+                    onfilterschange={handleFiltersChange}
+                    onsearch={handleSearch}
+                    onreset={handleReset}>
+                </c-sales-map-filters>
+            </div>
+
+            <!-- Map Content -->
+            <div class={mapContentClass} style={mapContentStyle}>
+                <template if:true={hasAccounts}>
+                    <!-- Map Component -->
+                    <div class="map-wrapper">
+                        <lightning-map
+                            map-markers={mapMarkers}
+                            zoom-level={zoomLevel}
+                            center={mapCenter}
+                            list-view="hidden"
+                            selected-marker-value={selectedMarkerValue}
+                            onmarkerselect={handleMarkerSelect}
+                            class="google-map">
+                        </lightning-map>
+
+                        <!-- Map Options Bar -->
+                        <div class="optionInput">
+                            <button class="map-option-btn" onclick={fitMapToMarkers} title="Fit map to markers">
+                                <lightning-icon icon-name="utility:expand" size="small"></lightning-icon>
+                            </button>
+                            
+                            <label class="switch">
+                                <input type="checkbox" checked={onlyMainAccounts} onchange={handleMainAccountToggle}/>
+                                <span class="slider round">
+                                    <span class="on">main Accounts</span>
+                                    <span class="off">all Accounts</span>
+                                </span>
+                            </label>
+                        </div>
+
+                        <!-- Legend -->
+                        <c-sales-map-legend
+                            selected-view={selectedView}
+                            legend-items={legendItems}
+                            show-legend={showLegend}>
+                        </c-sales-map-legend>
+                    </div>
+
+                    <!-- View Options -->
+                    <div class="options-row options-row_margin_small">
+                        <div class="selectViewOptions-wrapper">
+                            <div>Colorize marker based on:</div>
+                            <lightning-combobox
+                                name="viewOptions"
+                                value={selectedView}
+                                options={viewOptions}
+                                onchange={handleViewChange}
+                                variant="label-hidden"
+                                class="selectViewOptions">
+                            </lightning-combobox>
+                        </div>
+                    </div>
+
+                    <!-- Account Table -->
+                    <div class="table-wrapper">
+                        <c-account-data-table
+                            accounts={displayedAccounts}
+                            columns={tableColumns}
+                            title={tableTitle}
+                            show-download-button
+                            onsearch={handleTableSearch}
+                            onrowaction={handleRowAction}>
+                        </c-account-data-table>
+                    </div>
+                </template>
+
+                <template if:false={hasAccounts}>
+                    <div class="simpleMap">
+                        We could not find a Territory assigned to you. Please use the search options to see account data and the map.
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Event Creation Modal -->
+        <template if:true={showEventModal}>
+            <c-account-quick-event-lwc
+                record-id={selectedAccountId}
+                mode="modal"
+                show-close-button
+                show-backdrop
+                oncreated={handleEventCreated}
+                onclose={handleEventClose}>
+            </c-account-quick-event-lwc>
+        </template>
+    </div>
+</template>

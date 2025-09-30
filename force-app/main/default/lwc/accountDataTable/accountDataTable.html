@@ -1,0 +1,67 @@
+<template>
+    <lightning-card title={title} icon-name="standard:account">
+        <div slot="actions">
+            <template if:true={showDownloadButton}>
+                <lightning-button
+                    label="Download"
+                    onclick={handleExport}>
+                </lightning-button>
+            </template>
+        </div>
+        
+        <div class="slds-p-horizontal_medium">
+            <lightning-input
+                type="search"
+                label="Search"
+                placeholder="Search..."
+                value={searchKey}
+                onchange={handleSearch}>
+            </lightning-input>
+            
+            <c-pagination-lwc
+                current-page={currentPage}
+                max={totalRecords}
+                records-per-page={recordsPerPage}
+                onpagechange={handlePageChange}>
+            </c-pagination-lwc>
+            
+            <div class="table-container">
+                <table class="slds-table slds-table_bordered">
+                    <thead>
+                        <tr>
+                            <th>Action</th>
+                            <template for:each={columns} for:item="col">
+                                <th key={col.fieldName}>{col.label}</th>
+                            </template>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template for:each={displayRows} for:item="row">
+                            <tr key={row.id}>
+                                <td>
+                                    <lightning-button-icon
+                                        icon-name="utility:location"
+                                        alternative-text="Open Account"
+                                        title="Open Account"
+                                        onclick={handleRowAction}
+                                        data-id={row.id}>
+                                    </lightning-button-icon>
+                                </td>
+                                <template for:each={row.cells} for:item="cell">
+                                    <td key={cell.key}>
+                                        <template if:true={cell.isHtml}>
+                                            <lightning-formatted-rich-text value={cell.value}></lightning-formatted-rich-text>
+                                        </template>
+                                        <template if:false={cell.isHtml}>
+                                            {cell.value}
+                                        </template>
+                                    </td>
+                                </template>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </lightning-card>
+</template>

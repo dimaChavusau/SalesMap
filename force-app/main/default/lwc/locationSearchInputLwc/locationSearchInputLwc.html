@@ -1,0 +1,34 @@
+<template>
+    <div class="location-search-container">
+        <lightning-input
+            type="text"
+            placeholder="Example: 91058, Erlangen, Germany"
+            value={searchValue}
+            onchange={handleInputChange}
+            onfocus={handleFocus}
+            onblur={handleBlur}>
+        </lightning-input>
+        
+        <template if:true={showSuggestions}>
+            <div class="suggestions-dropdown">
+                <template if:true={isLoading}>
+                    <lightning-spinner size="small"></lightning-spinner>
+                </template>
+                <template if:false={isLoading}>
+                    <ul>
+                        <template for:each={suggestions} for:item="suggestion">
+                            <li key={suggestion} 
+                                onclick={handleSuggestionClick}
+                                data-value={suggestion}>
+                                {suggestion}
+                            </li>
+                        </template>
+                    </ul>
+                    <template if:true={noResults}>
+                        <div class="no-results">No locations found...</div>
+                    </template>
+                </template>
+            </div>
+        </template>
+    </div>
+</template>

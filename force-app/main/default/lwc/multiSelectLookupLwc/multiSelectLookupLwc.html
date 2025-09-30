@@ -1,0 +1,22 @@
+<template>
+    <div class="multi-select-container">
+        <lightning-record-edit-form object-api-name={objectApiName}>
+            <lightning-input-field 
+                field-name="Id"
+                variant="label-hidden"
+                onchange={handleSelection}>
+            </lightning-input-field>
+        </lightning-record-edit-form>
+        
+        <div class="selected-items">
+            <template for:each={selectedRecords} for:item="record">
+                <lightning-pill 
+                    key={record.Id}
+                    label={record.Name}
+                    name={record.Id}
+                    onremove={handleRemove}>
+                </lightning-pill>
+            </template>
+        </div>
+    </div>
+</template>

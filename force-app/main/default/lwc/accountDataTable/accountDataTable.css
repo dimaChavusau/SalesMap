@@ -1,0 +1,12 @@
+.table-container {
+    margin-top: 1rem;
+    overflow-x: auto;
+}
+
+.slds-table th {
+    background-color: #f4f6f9;
+}
+
+.slds-table tbody tr:hover {
+    background-color: #f4f6f9;
+}

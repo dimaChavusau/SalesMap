@@ -1,0 +1,297 @@
+<template>
+    <div class="filter-wrapper">
+        <!-- Help Link -->
+        <div class="help-section">
+            <a href="/lightning/r/ContentDocument/0691p0000074OSjAAM/view" target="_blank" class="help-link">
+                Help & Guide
+            </a>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons-container">
+            <lightning-button
+                label="Search"
+                variant="brand"
+                class="action-button search-button"
+                onclick={handleSearch}>
+            </lightning-button>
+            <lightning-button
+                label="Reset"
+                variant="neutral"
+                class="action-button reset-button"
+                onclick={handleReset}>
+            </lightning-button>
+        </div>
+
+        <!-- Only Main Accounts Checkbox -->
+        <div class="checkbox-section">
+            <lightning-input
+                type="checkbox"
+                label="Only main accounts"
+                checked={onlyMainAccounts}
+                onchange={handleMainAccountChange}>
+            </lightning-input>
+        </div>
+
+        <!-- Filter Section Container -->
+        <div class="filters-container">
+            
+            <!-- General Search -->
+            <div class="filter-group">
+                <div class="filter-header">
+                    <lightning-icon icon-name="utility:search" size="x-small" class="filter-icon"></lightning-icon>
+                    <span class="filter-label">SEARCH</span>
+                </div>
+                <div class="filter-content">
+                    <lightning-input
+                        type="search"
+                        placeholder="Search..."
+                        value={searchTerm}
+                        variant="label-hidden"
+                        onchange={handleSearchTermChange}>
+                    </lightning-input>
+                </div>
+            </div>
+
+            <!-- Location Search -->
+            <div class="filter-group">
+                <div class="filter-header">
+                    <lightning-icon icon-name="utility:location" size="x-small" class="filter-icon"></lightning-icon>
+                    <span class="filter-label">LOCATION</span>
+                </div>
+                <div class="filter-content">
+                    <c-location-search-input-lwc
+                        onselectlocation={handleLocationSelect}>
+                    </c-location-search-input-lwc>
+                    <div class="location-radius-container">
+                        <lightning-input
+                            type="number"
+                            placeholder="Radius"
+                            value={radius}
+                            variant="label-hidden"
+                            class="radius-input"
+                            onchange={handleRadiusChange}>
+                        </lightning-input>
+                        <lightning-combobox
+                            value={unit}
+                            options={unitOptions}
+                            variant="label-hidden"
+                            class="unit-select"
+                            onchange={handleUnitChange}>
+                        </lightning-combobox>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Territories -->
+            <div class="filter-group">
+                <div class="filter-header">
+                    <lightning-icon icon-name="standard:service_territory" size="x-small" class="filter-icon"></lightning-icon>
+                    <span class="filter-label">TERRITORIES</span>
+                </div>
+                <div class="filter-content">
+                    <c-multi-select-lookup-lwc
+                        object-api-name="Territory__c"
+                        icon-name="standard:service_territory"
+                        selected-records={selectedTerritories}
+                        fields="Code__c"
+                        conditions={territoryConditions}
+                        onselectchange={handleTerritoryChange}>
+                    </c-multi-select-lookup-lwc>
+                </div>
+            </div>
+
+            <!-- Trainers -->
+            <div class="filter-group">
+                <div class="filter-header">
+                    <lightning-icon icon-name="standard:user" size="x-small" class="filter-icon"></lightning-icon>
+                    <span class="filter-label">TRAINERS</span>
+                </div>
+                <div class="filter-content">
+                    <c-multi-select-lookup-lwc
+                        object-api-name="User"
+                        icon-name="standard:user"
+                        selected-records={selectedTrainers}
+                        conditions={trainerConditions}
+                        onselectchange={handleTrainerChange}>
+                    </c-multi-select-lookup-lwc>
+                </div>
+            </div>
+
+            <!-- Campaigns -->
+            <div class="filter-group">
+                <div class="filter-header">
+                    <lightning-icon icon-name="standard:campaign" size="x-small" class="filter-icon"></lightning-icon>
+                    <span class="filter-label">CAMPAIGNS</span>
+                </div>
+                <div class="filter-content">
+                    <c-multi-select-lookup-lwc
+                        object-api-name="Campaign"
+                        icon-name="standard:campaign"
+                        selected-records={selectedCampaigns}
+                        onselectchange={handleCampaignChange}>
+                    </c-multi-select-lookup-lwc>
+                </div>
+            </div>
+
+            <!-- Brands (US Only) -->
+            <template if:true={showBrands}>
+                <div class="filter-group">
+                    <div class="filter-header">
+                        <lightning-icon icon-name="utility:bookmark" size="x-small" class="filter-icon"></lightning-icon>
+                        <span class="filter-label">BRANDS</span>
+                    </div>
+                    <div class="filter-content">
+                        <lightning-dual-listbox
+                            name="brands"
+                            source-label="Available"
+                            selected-label="Selected"
+                            options={brandOptions}
+                            value={selectedBrands}
+                            size="4"
+                            onchange={handleBrandChange}>
+                        </lightning-dual-listbox>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Legal Hierarchies -->
+            <div class="filter-group">
+                <div class="filter-header">
+                    <lightning-icon icon-name="standard:hierarchy" size="x-small" class="filter-icon"></lightning-icon>
+                    <span class="filter-label">LEGAL HIERARCHIES</span>
+                </div>
+                <div class="filter-content">
+                    <c-multi-select-lookup-lwc
+                        object-api-name="Customer_Groups__c"
+                        icon-name="standard:hierarchy"
+                        selected-records={selectedLegalHierarchies}
+                        conditions="Account_Group_Typ__c = 'Strategic Group'"
+                        fields="Customer_Node_Code__c"
+                        onselectchange={handleLegalHierarchyChange}>
+                    </c-multi-select-lookup-lwc>
+                </div>
+            </div>
+
+            <!-- Business Hierarchies -->
+            <div class="filter-group">
+                <div class="filter-header">
+                    <lightning-icon icon-name="standard:business_hours" size="x-small" class="filter-icon"></lightning-icon>
+                    <span class="filter-label">BUSINESS HIERARCHIES</span>
+                </div>
+                <div class="filter-content">
+                    <c-multi-select-lookup-lwc
+                        object-api-name="Customer_Groups__c"
+                        icon-name="standard:business_hours"
+                        selected-records={selectedBusinessHierarchies}
+                        conditions="Account_Group_Typ__c = 'Pricing Terms'"
+                        fields="Customer_Node_Code__c"
+                        onselectchange={handleBusinessHierarchyChange}>
+                    </c-multi-select-lookup-lwc>
+                </div>
+            </div>
+
+            <!-- Distribution Channel -->
+            <div class="filter-group">
+                <div class="filter-header">
+                    <lightning-icon icon-name="utility:flow" size="x-small" class="filter-icon"></lightning-icon>
+                    <span class="filter-label">DISTRIBUTION CHANNEL</span>
+                </div>
+                <div class="filter-content">
+                    <lightning-dual-listbox
+                        name="distributionChannel"
+                        source-label="Available"
+                        selected-label="Selected"
+                        options={distributionChannelOptions}
+                        value={selectedDistributionChannels}
+                        size="4"
+                        onchange={handleDistributionChannelChange}>
+                    </lightning-dual-listbox>
+                </div>
+            </div>
+
+            <!-- Account Status -->
+            <div class="filter-group">
+                <div class="filter-header">
+                    <lightning-icon icon-name="standard:account" size="x-small" class="filter-icon"></lightning-icon>
+                    <span class="filter-label">ACCOUNT STATUS</span>
+                </div>
+                <div class="filter-content">
+                    <lightning-dual-listbox
+                        name="accountStatus"
+                        source-label="Available"
+                        selected-label="Selected"
+                        options={accountStatusOptions}
+                        value={selectedAccountStatus}
+                        size="4"
+                        onchange={handleAccountStatusChange}>
+                    </lightning-dual-listbox>
+                </div>
+            </div>
+
+            <!-- Merchant Status (Germany Only) -->
+            <template if:true={showMerchantStatusFilter}>
+                <div class="filter-group">
+                    <div class="filter-header">
+                        <lightning-icon icon-name="standard:customer" size="x-small" class="filter-icon"></lightning-icon>
+                        <span class="filter-label">MERCHANT STATUS</span>
+                    </div>
+                    <div class="filter-content">
+                        <lightning-dual-listbox
+                            name="merchantStatus"
+                            source-label="Available"
+                            selected-label="Selected"
+                            options={merchantStatusOptions}
+                            value={selectedMerchantStatus}
+                            size="4"
+                            onchange={handleMerchantStatusChange}>
+                        </lightning-dual-listbox>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Exclude Do Not Visit -->
+            <div class="checkbox-section">
+                <lightning-input
+                    type="checkbox"
+                    label="Exclude Do Not Visit"
+                    checked={excludeDoNotVisit}
+                    onchange={handleExcludeDoNotVisitChange}>
+                </lightning-input>
+            </div>
+
+            <!-- Visits & Trainings -->
+            <div class="filter-group">
+                <div class="filter-header">
+                    <lightning-icon icon-name="standard:event" size="x-small" class="filter-icon"></lightning-icon>
+                    <span class="filter-label">VISITS & TRAININGS</span>
+                </div>
+                <div class="filter-content">
+                    <lightning-combobox
+                        value={salesTargetFilter}
+                        options={salesTargetOptions}
+                        placeholder="Select option"
+                        variant="label-hidden"
+                        onchange={handleSalesTargetChange}>
+                    </lightning-combobox>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Action Buttons -->
+        <div class="action-buttons-container bottom-buttons">
+            <lightning-button
+                label="Search"
+                variant="brand"
+                class="action-button"
+                onclick={handleSearch}>
+            </lightning-button>
+            <lightning-button
+                label="Cancel"
+                variant="neutral"
+                class="action-button"
+                onclick={handleReset}>
+            </lightning-button>
+        </div>
+    </div>
+</template>

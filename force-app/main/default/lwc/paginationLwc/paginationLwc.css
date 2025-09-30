@@ -1,0 +1,38 @@
+.pagination-container {
+    margin: 10px 0;
+    padding: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    border-radius: 6px;
+}
+
+.pagination {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.page-button {
+    padding: 5px 10px;
+    border: 1px solid #d8dde6;
+    background: white;
+    border-radius: 4px;
+    cursor: pointer;
+    min-width: 35px;
+}
+
+.page-button:hover {
+    background: #f4f6f9;
+}
+
+.page-button.active {
+    background: #0070d2;
+    color: white;
+    border-color: #0070d2;
+}
+
+.page-indicator {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #706e8c;
+}

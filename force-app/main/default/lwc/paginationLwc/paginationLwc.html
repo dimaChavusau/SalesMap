@@ -1,0 +1,18 @@
+<template>
+    <div class="pagination-container">
+        <div class="pagination">
+            <template for:each={pageList} for:item="page">
+                <button 
+                    key={page}
+                    class={page.class}
+                    data-page={page.value}
+                    onclick={handlePageClick}>
+                    {page.label}
+                </button>
+            </template>
+        </div>
+        <div class="page-indicator">
+            Displaying {minRec} to {maxRec} records on page {currentPage}
+        </div>
+    </div>
+</template>
