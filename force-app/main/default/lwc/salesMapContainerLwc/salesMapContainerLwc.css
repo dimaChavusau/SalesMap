@@ -8,7 +8,7 @@
     position: relative;
 }
 
-/* Hamburger Menu */
+/* Hamburger Menu - FIXED VERSION */
 .hamburger {
     position: absolute;
     background: white;
@@ -33,7 +33,8 @@
 .hamburger-inner {
     display: block;
     top: 50%;
-    margin-top: -2px;
+    margin-top: -1px; /* Fixed: Changed from -2px to -1px for better centering */
+    position: absolute; /* Added: Needs position absolute */
 }
 
 .hamburger-inner, 
@@ -50,19 +51,37 @@
 .hamburger-inner::before {
     top: -6px;
     content: "";
+    display: block; /* Added: Ensure pseudo-elements display */
 }
 
 .hamburger-inner::after {
     bottom: -6px;
     content: "";
+    display: block; /* Added: Ensure pseudo-elements display */
+}
+
+/* Fixed: Corrected the active state animations */
+.hamburger--arrow.is-active .hamburger-inner {
+    transform: rotate(0deg); /* Added: Base transform for parent */
 }
 
 .hamburger--arrow.is-active .hamburger-inner::before {
-    transform: translate3d(-4px, 0, 0) rotate(-45deg) scale(0.7, 1);
+    transform: translate3d(-8px, 0, 0) rotate(-45deg) scale(0.7, 1);
+    top: 0; /* Added: Reset position for animation */
 }
 
 .hamburger--arrow.is-active .hamburger-inner::after {
-    transform: translate3d(-4px, 0, 0) rotate(45deg) scale(0.7, 1);
+    transform: translate3d(-8px, 0, 0) rotate(45deg) scale(0.7, 1);
+    bottom: 0; /* Added: Reset position for animation */
+}
+
+/* Optional: Add hover effect */
+.hamburger:hover {
+    opacity: 0.8;
+}
+
+.hamburger:active {
+    opacity: 0.6;
 }
 
 /* Filter Container */
