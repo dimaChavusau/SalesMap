@@ -26,6 +26,8 @@
 
             <!-- Map Content -->
             <div class={mapContentClass} style={mapContentStyle}>
+                <!-- Replace the entire map section in salesMapContainerLwc.html -->
+
                 <template if:true={hasAccounts}>
                     <!-- Map Component -->
                     <div class="map-wrapper">
@@ -39,19 +41,24 @@
                             class="google-map">
                         </lightning-map>
 
-                        <!-- Map Options Bar -->
-                        <div class="optionInput">
-                            <button class="map-option-btn" onclick={fitMapToMarkers} title="Fit map to markers">
-                                <lightning-icon icon-name="utility:expand" size="small"></lightning-icon>
+                        <!-- Map Options Bar (Positioned over map) -->
+                        <div class="map-options-container">
+                            <!-- Fit Map Button -->
+                            <button class="map-control-button" onclick={fitMapToMarkers}>
+                                <lightning-icon icon-name="utility:expand" size="x-small"></lightning-icon>
+                                <span class="tooltip">Fit map to markers</span>
                             </button>
                             
-                            <label class="switch">
-                                <input type="checkbox" checked={onlyMainAccounts} onchange={handleMainAccountToggle}/>
-                                <span class="slider round">
-                                    <span class="on">main Accounts</span>
-                                    <span class="off">all Accounts</span>
-                                </span>
-                            </label>
+                            <!-- Main Account Toggle Switch -->
+                            <div class="switch-container">
+                                <label class="switch">
+                                    <input type="checkbox" checked={onlyMainAccounts} onchange={handleMainAccountToggle}/>
+                                    <span class="slider">
+                                        <span class="slider-text slider-text-on">main Accounts</span>
+                                        <span class="slider-text slider-text-off">all Accounts</span>
+                                    </span>
+                                </label>
+                            </div>
                         </div>
 
                         <!-- Legend -->
@@ -62,7 +69,7 @@
                         </c-sales-map-legend>
                     </div>
 
-                    <!-- View Options -->
+                    <!-- View Options (Below map) -->
                     <div class="options-row options-row_margin_small">
                         <div class="selectViewOptions-wrapper">
                             <div>Colorize marker based on:</div>

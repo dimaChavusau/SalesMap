@@ -525,4 +525,49 @@ export default class SalesMapContainerLwc extends LightningElement {
     get tableTitle() {
         return `${this.displayedAccounts.length} accounts found`;
     }
+
+    // Add these methods to salesMapContainerLwc.js
+
+    handleMainAccountToggle(event) {
+        this.onlyMainAccounts = event.target.checked;
+        this.performSearch();
+    }
+
+    fitMapToMarkers() {
+        if (this.mapMarkers.length > 0) {
+            // Calculate bounds from all markers
+            const lats = this.mapMarkers.map(m => m.location.Latitude);
+            const lngs = this.mapMarkers.map(m => m.location.Longitude);
+            
+            const centerLat = (Math.max(...lats) + Math.min(...lats)) / 2;
+            const centerLng = (Math.max(...lngs) + Math.min(...lngs)) / 2;
+            
+            this.mapCenter = {
+                location: { 
+                    Latitude: centerLat, 
+                    Longitude: centerLng 
+                }
+            };
+            
+            // Calculate appropriate zoom level based on bounds
+            const latDiff = Math.max(...lats) - Math.min(...lats);
+            const lngDiff = Math.max(...lngs) - Math.min(...lngs);
+            const maxDiff = Math.max(latDiff, lngDiff);
+            
+            // Adjust zoom level based on spread of markers
+            if (maxDiff > 10) {
+                this.zoomLevel = 4;
+            } else if (maxDiff > 5) {
+                this.zoomLevel = 6;
+            } else if (maxDiff > 2) {
+                this.zoomLevel = 8;
+            } else if (maxDiff > 1) {
+                this.zoomLevel = 10;
+            } else if (maxDiff > 0.5) {
+                this.zoomLevel = 12;
+            } else {
+                this.zoomLevel = 14;
+            }
+        }
+    }
 }
