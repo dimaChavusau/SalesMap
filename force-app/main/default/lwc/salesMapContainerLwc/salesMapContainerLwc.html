@@ -1,3 +1,4 @@
+<!-- salesMapContainerLwc.html - FINAL COMPLETE VERSION -->
 <template>
     <div class="sales-map-container">
         <!-- Loading Spinner -->
@@ -25,11 +26,9 @@
             </div>
 
             <!-- Map Content -->
-            <div class={mapContentClass} style={mapContentStyle}>
-                <!-- Replace the entire map section in salesMapContainerLwc.html -->
-
+            <div class={mapContentClass}>
                 <template if:true={hasAccounts}>
-                    <!-- Map Component -->
+                    <!-- Map Component with Controls -->
                     <div class="map-wrapper">
                         <lightning-map
                             map-markers={mapMarkers}
@@ -44,7 +43,7 @@
                         <!-- Map Options Bar (Positioned over map) -->
                         <div class="map-options-container">
                             <!-- Fit Map Button -->
-                            <button class="map-control-button" onclick={fitMapToMarkers}>
+                            <button class="map-control-button" onclick={fitMapToMarkers} title="Fit map to markers">
                                 <lightning-icon icon-name="utility:expand" size="x-small"></lightning-icon>
                                 <span class="tooltip">Fit map to markers</span>
                             </button>
@@ -69,7 +68,7 @@
                         </c-sales-map-legend>
                     </div>
 
-                    <!-- View Options (Below map) -->
+                    <!-- View Options -->
                     <div class="options-row options-row_margin_small">
                         <div class="selectViewOptions-wrapper">
                             <div>Colorize marker based on:</div>

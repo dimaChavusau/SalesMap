@@ -1,5 +1,169 @@
-/* salesMapContainerLwc.css - FINAL COMPLETE VERSION */
+/* salesMapContainerLwc.css - COMPLETE FINAL VERSION WITH ALL FIXES */
 
+/* ===================================
+   CRITICAL MAP CONTROLS FIX
+   =================================== */
+
+/* Force override Lightning Map default styles */
+.map-wrapper {
+    position: relative !important;
+    width: 100%;
+    height: 600px;
+}
+
+.map-wrapper lightning-map {
+    position: relative !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+}
+
+/* Map options MUST appear over the map */
+.map-options-container {
+    position: absolute !important;
+    top: 10px !important;
+    left: 10px !important;
+    z-index: 9999 !important;
+    display: flex !important;
+    gap: 8px !important;
+    align-items: center !important;
+    pointer-events: none !important;
+}
+
+.map-options-container > * {
+    pointer-events: auto !important;
+}
+
+/* Button styling MUST override defaults */
+.map-control-button {
+    background: #ffffff !important;
+    border: none !important;
+    border-radius: 2px !important;
+    width: 40px !important;
+    height: 40px !important;
+    padding: 0 !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px !important;
+}
+
+.map-control-button:hover {
+    background: #f4f6f9 !important;
+}
+
+/* Switch container */
+.switch-container {
+    background: #ffffff !important;
+    border-radius: 2px !important;
+    box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px !important;
+    overflow: hidden !important;
+}
+
+/* Toggle switch - force styles */
+.switch {
+    position: relative !important;
+    display: inline-block !important;
+    width: 140px !important;
+    height: 34px !important;
+    margin: 0 !important;
+}
+
+.switch input {
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    position: absolute !important;
+}
+
+.slider {
+    position: absolute !important;
+    cursor: pointer !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background-color: #cccccc !important;
+    transition: background-color 0.4s !important;
+    border-radius: 34px !important;
+}
+
+.slider:before {
+    position: absolute !important;
+    content: "" !important;
+    height: 26px !important;
+    width: 26px !important;
+    left: 4px !important;
+    bottom: 4px !important;
+    background-color: #ffffff !important;
+    transition: transform 0.4s !important;
+    border-radius: 50% !important;
+}
+
+.slider-text {
+    position: absolute !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    line-height: 1 !important;
+    user-select: none !important;
+    pointer-events: none !important;
+}
+
+.slider-text-on {
+    left: 8px !important;
+    color: #ffffff !important;
+    display: none !important;
+}
+
+.slider-text-off {
+    right: 8px !important;
+    color: #333333 !important;
+    display: block !important;
+}
+
+/* Checked state */
+input:checked + .slider {
+    background-color: #0070d2 !important;
+}
+
+input:checked + .slider:before {
+    transform: translateX(106px) !important;
+}
+
+input:checked + .slider .slider-text-on {
+    display: block !important;
+}
+
+input:checked + .slider .slider-text-off {
+    display: none !important;
+}
+
+/* Tooltip */
+.tooltip {
+    display: none;
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    white-space: nowrap;
+    z-index: 2000;
+}
+
+.map-control-button:hover .tooltip {
+    display: block;
+}
+
+/* ===================================
+   BASE CONTAINER
+   =================================== */
 .sales-map-container {
     min-height: 100vh;
     background: #f4f6f9;
@@ -22,7 +186,7 @@
     display: inline-block;
     margin-left: 5px;
     margin-top: 5px;
-    padding: 10px;
+    padding: 15px;
     border: none;
     transition: opacity 0.4s;
 }
@@ -118,183 +282,13 @@
 }
 
 /* ===================================
-   MAP WRAPPER & CONTROLS
+   LIGHTNING MAP
    =================================== */
-.map-wrapper {
-    position: relative;
-    margin-top: 20px;
-    width: 100%;
-    height: 600px;
-}
-
-/* Lightning Map styling */
 .google-map {
     width: 100%;
     height: 100%;
     border: 1px solid #d8dde6;
     border-radius: 4px;
-}
-
-/* Override lightning-map's internal styles */
-.map-wrapper lightning-map {
-    position: relative;
-    display: block;
-    width: 100%;
-    height: 100%;
-}
-
-/* Map Options Container - Positioned over map */
-.map-options-container {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    z-index: 1000;
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    pointer-events: none;
-}
-
-.map-options-container > * {
-    pointer-events: auto;
-}
-
-/* Map Control Buttons - Round style matching old version */
-.map-control-button {
-    background: white;
-    border: none;
-    border-radius: 2px;
-    width: 40px;
-    height: 40px;
-    padding: 8px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px;
-    transition: all 0.2s ease;
-}
-
-.map-control-button:hover {
-    background: #f4f6f9;
-    box-shadow: rgba(0, 0, 0, 0.4) 0px 2px 6px 0px;
-}
-
-.map-control-button:active {
-    background: #e5e5e5;
-}
-
-/* Icon sizing */
-.map-control-button lightning-icon {
-    width: 18px;
-    height: 18px;
-}
-
-/* Switch Container */
-.switch-container {
-    background: white;
-    border-radius: 2px;
-    padding: 0;
-    box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px;
-}
-
-/* ===================================
-   TOGGLE SWITCH - Matching Old Aura
-   =================================== */
-.switch {
-    position: relative;
-    display: inline-block;
-    width: 140px;
-    height: 34px;
-}
-
-.switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #ccc;
-    transition: .4s;
-    border-radius: 34px;
-}
-
-.slider:before {
-    position: absolute;
-    content: "";
-    height: 26px;
-    width: 26px;
-    left: 4px;
-    bottom: 4px;
-    background-color: white;
-    transition: .4s;
-    border-radius: 50%;
-}
-
-/* Text labels inside slider */
-.slider-text {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 10px;
-    font-weight: 600;
-    line-height: 1;
-    user-select: none;
-}
-
-.slider-text-on {
-    left: 8px;
-    color: white;
-    display: none;
-}
-
-.slider-text-off {
-    right: 8px;
-    color: #333;
-}
-
-/* Checked state */
-input:checked + .slider {
-    background-color: #0070d2;
-}
-
-input:checked + .slider:before {
-    transform: translateX(106px);
-}
-
-input:checked + .slider .slider-text-on {
-    display: block;
-}
-
-input:checked + .slider .slider-text-off {
-    display: none;
-}
-
-/* Tooltip */
-.tooltip {
-    display: none;
-    position: absolute;
-    bottom: -30px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 4px 8px;
-    border-radius: 3px;
-    font-size: 11px;
-    white-space: nowrap;
-    z-index: 2000;
-}
-
-.map-control-button:hover .tooltip {
-    display: block;
 }
 
 /* ===================================
@@ -364,22 +358,22 @@ input:checked + .slider .slider-text-off {
 
 @media (max-width: 768px) {
     .map-options-container {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 5px;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 5px !important;
     }
     
     .switch {
-        width: 120px;
+        width: 120px !important;
     }
     
     .slider:before {
-        width: 22px;
-        height: 22px;
+        width: 22px !important;
+        height: 22px !important;
     }
     
     input:checked + .slider:before {
-        transform: translateX(86px);
+        transform: translateX(86px) !important;
     }
     
     .selectViewOptions-wrapper {
@@ -398,7 +392,7 @@ input:checked + .slider .slider-text-off {
     }
     
     .map-wrapper {
-        height: 400px;
+        height: 400px !important;
     }
     
     .selectViewOptions-wrapper {
