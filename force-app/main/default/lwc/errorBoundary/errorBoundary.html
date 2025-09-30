@@ -1,0 +1,21 @@
+<!-- errorBoundary.html -->
+<template>
+    <template if:true={hasError}>
+        <div class="slds-notify slds-notify_alert slds-alert_error" role="alert">
+            <span class="slds-assistive-text">error</span>
+            <lightning-icon icon-name="utility:error" size="small" variant="inverse"></lightning-icon>
+            <h2>{friendlyMessage}</h2>
+            <p class="slds-m-top_small">{errorMessage}</p>
+            <lightning-button
+                label="Reload Page"
+                variant="neutral"
+                onclick={handleReload}
+                class="slds-m-top_small">
+            </lightning-button>
+        </div>
+    </template>
+    
+    <template if:false={hasError}>
+        <slot></slot>
+    </template>
+</template>
