@@ -1,22 +1,95 @@
+<!-- multiSelectLookupLwc.html -->
 <template>
-    <div class="multi-select-container">
-        <lightning-record-edit-form object-api-name={objectApiName}>
-            <lightning-input-field 
-                field-name="Id"
-                variant="label-hidden"
-                onchange={handleSelection}>
-            </lightning-input-field>
-        </lightning-record-edit-form>
-        
-        <div class="selected-items">
-            <template for:each={selectedRecords} for:item="record">
-                <lightning-pill 
-                    key={record.Id}
-                    label={record.Name}
-                    name={record.Id}
-                    onremove={handleRemove}>
-                </lightning-pill>
-            </template>
+    <div class="slds-form-element">
+        <div class="slds-form-element__control">
+            <div class="slds-combobox_container">
+                <div class={comboboxClass} role="combobox" aria-expanded={showDropdown} aria-haspopup="listbox">
+                    <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right">
+                        <input
+                            type="text"
+                            class="slds-input slds-combobox__input"
+                            placeholder={placeholder}
+                            value={searchTerm}
+                            aria-autocomplete="list"
+                            aria-controls="listbox-id"
+                            role="textbox"
+                            onfocus={handleFocus}
+                            onblur={handleBlur}
+                            oninput={handleSearchChange}
+                        />
+                        <span class="slds-icon_container slds-icon-utility-search slds-input__icon slds-input__icon_right">
+                            <lightning-icon icon-name="utility:search" size="x-small" alternative-text="Search"></lightning-icon>
+                        </span>
+                    </div>
+                    
+                    <template if:true={showDropdown}>
+                        <div id="listbox-id" class="slds-dropdown slds-dropdown_length-5 slds-dropdown_fluid" role="listbox">
+                            <template if:true={isLoading}>
+                                <div class="slds-align_absolute-center slds-p-vertical_small">
+                                    <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+                                </div>
+                            </template>
+                            
+                            <template if:false={isLoading}>
+                                <ul class="slds-listbox slds-listbox_vertical" role="presentation">
+                                    <template if:true={filteredResults.length}>
+                                        <template for:each={filteredResults} for:item="result">
+                                            <li key={result.Id} role="presentation" class="slds-listbox__item">
+                                                <div 
+                                                    class="slds-media slds-listbox__option slds-listbox__option_plain slds-media_small"
+                                                    role="option"
+                                                    data-id={result.Id}
+                                                    onclick={handleResultClick}>
+                                                    <span class="slds-media__figure">
+                                                        <lightning-icon 
+                                                            icon-name={iconName} 
+                                                            size="small"
+                                                            alternative-text={result.Name}>
+                                                        </lightning-icon>
+                                                    </span>
+                                                    <span class="slds-media__body">
+                                                        <span class="slds-truncate" title={result.Name}>
+                                                            {result.Name}
+                                                        </span>
+                                                    </span>
+                                                </div>
+                                            </li>
+                                        </template>
+                                    </template>
+                                    
+                                    <template if:false={filteredResults.length}>
+                                        <li role="presentation" class="slds-listbox__item">
+                                            <div class="slds-align_absolute-center slds-p-vertical_small slds-text-color_weak">
+                                                <template if:true={searchTerm}>
+                                                    No results found
+                                                </template>
+                                                <template if:false={searchTerm}>
+                                                    Start typing to search...
+                                                </template>
+                                            </div>
+                                        </li>
+                                    </template>
+                                </ul>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </div>
         </div>
+        
+        <!-- Selected Pills -->
+        <template if:true={hasSelectedItems}>
+            <div class="slds-m-top_x-small">
+                <template for:each={selectedItems} for:item="item">
+                    <lightning-pill 
+                        key={item.Id}
+                        label={item.Name}
+                        name={item.Id}
+                        onremove={handleRemove}
+                        class="slds-m-right_xx-small slds-m-bottom_xx-small">
+                    </lightning-pill>
+                </template>
+            </div>
+        </template>
     </div>
 </template>

@@ -1,3 +1,4 @@
+// paginationLwc.js - FIXED
 import { LightningElement, api, track } from 'lwc';
 
 export default class PaginationLwc extends LightningElement {
@@ -11,8 +12,8 @@ export default class PaginationLwc extends LightningElement {
         
         for (let i = 1; i <= totalPages; i++) {
             pages.push({
-                label: i,
-                value: i,
+                label: String(i),
+                value: String(i), // Must be string for key uniqueness
                 class: `page-button ${i === this.currentPage ? 'active' : ''}`
             });
         }
@@ -30,7 +31,7 @@ export default class PaginationLwc extends LightningElement {
     }
     
     handlePageClick(event) {
-        const selectedPage = parseInt(event.target.dataset.page);
+        const selectedPage = parseInt(event.target.dataset.page, 10);
         if (selectedPage !== this.currentPage) {
             this.dispatchEvent(new CustomEvent('pagechange', {
                 detail: { currentPage: selectedPage }

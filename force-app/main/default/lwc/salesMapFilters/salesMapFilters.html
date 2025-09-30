@@ -1,9 +1,10 @@
+<!-- salesMapFilters.html - COMPLETE VERSION matching old Aura -->
 <template>
     <div class="filter-wrapper">
         <!-- Help Link -->
         <div class="help-section">
             <a href="/lightning/r/ContentDocument/0691p0000074OSjAAM/view" target="_blank" class="help-link">
-                Help & Guide
+                Help &amp; Guide
             </a>
         </div>
 
@@ -83,7 +84,7 @@
                 </div>
             </div>
 
-            <!-- Territories - exactly like old Aura -->
+            <!-- Territories -->
             <div class="filter-group">
                 <div class="filter-header">
                     <lightning-icon icon-name="standard:service_territory" size="x-small" class="filter-icon"></lightning-icon>
@@ -93,15 +94,15 @@
                     <c-multi-select-lookup-lwc
                         object-api-name="Territory__c"
                         icon-name="standard:service_territory"
-                        label="Territories"
+                        placeholder="Search territories..."
                         fields="Code__c"
-                        conditions="isActive__c = true"
+                        conditions={territoryConditions}
                         onselectchange={handleTerritoryChange}>
                     </c-multi-select-lookup-lwc>
                 </div>
             </div>
 
-            <!-- Trainers - exactly like old Aura -->
+            <!-- Trainers -->
             <div class="filter-group">
                 <div class="filter-header">
                     <lightning-icon icon-name="standard:user" size="x-small" class="filter-icon"></lightning-icon>
@@ -111,14 +112,14 @@
                     <c-multi-select-lookup-lwc
                         object-api-name="User"
                         icon-name="standard:user"
-                        label="Trainers"
-                        conditions="IsActive = true AND Sivantos_Department_del__c = 'Audiology Trainer'"
+                        placeholder="Search trainers..."
+                        conditions={trainerConditions}
                         onselectchange={handleTrainerChange}>
                     </c-multi-select-lookup-lwc>
                 </div>
             </div>
 
-            <!-- Campaigns - exactly like old Aura -->
+            <!-- Campaigns -->
             <div class="filter-group">
                 <div class="filter-header">
                     <lightning-icon icon-name="standard:campaign" size="x-small" class="filter-icon"></lightning-icon>
@@ -128,13 +129,34 @@
                     <c-multi-select-lookup-lwc
                         object-api-name="Campaign"
                         icon-name="standard:campaign"
-                        label="Campaigns"
+                        placeholder="Search campaigns..."
                         onselectchange={handleCampaignChange}>
                     </c-multi-select-lookup-lwc>
                 </div>
             </div>
 
-            <!-- Legal Hierarchies - exactly like old Aura -->
+            <!-- Brands (US Only) -->
+            <template if:true={showBrands}>
+                <div class="filter-group">
+                    <div class="filter-header">
+                        <lightning-icon icon-name="utility:bookmark" size="x-small" class="filter-icon"></lightning-icon>
+                        <span class="filter-label">BRANDS</span>
+                    </div>
+                    <div class="filter-content">
+                        <lightning-dual-listbox
+                            name="brands"
+                            source-label="Available"
+                            selected-label="Selected"
+                            options={brandOptions}
+                            value={selectedBrands}
+                            size="4"
+                            onchange={handleBrandChange}>
+                        </lightning-dual-listbox>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Legal Hierarchies -->
             <div class="filter-group">
                 <div class="filter-header">
                     <lightning-icon icon-name="standard:hierarchy" size="x-small" class="filter-icon"></lightning-icon>
@@ -144,7 +166,7 @@
                     <c-multi-select-lookup-lwc
                         object-api-name="Customer_Groups__c"
                         icon-name="standard:hierarchy"
-                        label="Legal Hierarchies"
+                        placeholder="Search legal hierarchies..."
                         conditions="Account_Group_Typ__c = 'Strategic Group'"
                         fields="Customer_Node_Code__c"
                         onselectchange={handleLegalHierarchyChange}>
@@ -152,7 +174,7 @@
                 </div>
             </div>
 
-            <!-- Business Hierarchies - exactly like old Aura -->
+            <!-- Business Hierarchies -->
             <div class="filter-group">
                 <div class="filter-header">
                     <lightning-icon icon-name="standard:business_hours" size="x-small" class="filter-icon"></lightning-icon>
@@ -162,7 +184,7 @@
                     <c-multi-select-lookup-lwc
                         object-api-name="Customer_Groups__c"
                         icon-name="standard:business_hours"
-                        label="Business Hierarchies"
+                        placeholder="Search business hierarchies..."
                         conditions="Account_Group_Typ__c = 'Pricing Terms'"
                         fields="Customer_Node_Code__c"
                         onselectchange={handleBusinessHierarchyChange}>
@@ -243,7 +265,7 @@
             <div class="filter-group">
                 <div class="filter-header">
                     <lightning-icon icon-name="standard:event" size="x-small" class="filter-icon"></lightning-icon>
-                    <span class="filter-label">VISITS & TRAININGS</span>
+                    <span class="filter-label">VISITS &amp; TRAININGS</span>
                 </div>
                 <div class="filter-content">
                     <lightning-combobox

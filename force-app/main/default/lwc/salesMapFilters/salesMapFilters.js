@@ -1,4 +1,6 @@
+// salesMapFilters.js - COMPLETE VERSION matching old Aura
 import { LightningElement, api, track } from 'lwc';
+import getUser from '@salesforce/apex/SalesMapController.getUser';
 
 export default class SalesMapFilters extends LightningElement {
     @api userAffiliateCode;
@@ -7,6 +9,7 @@ export default class SalesMapFilters extends LightningElement {
     @track searchTerm = '';
     @track radius = 50;
     @track unit = 'km';
+    @track location = '';
     @track onlyMainAccounts = false;
     @track excludeDoNotVisit = false;
     @track selectedTerritories = [];
@@ -19,6 +22,9 @@ export default class SalesMapFilters extends LightningElement {
     @track selectedAccountStatus = ['All'];
     @track selectedMerchantStatus = ['All'];
     @track salesTargetFilter = '';
+    
+    @track isAdmin = false;
+    @track userWSAAffiliates = '';
     
     unitOptions = [
         { label: 'km', value: 'km' },
@@ -34,7 +40,6 @@ export default class SalesMapFilters extends LightningElement {
     
     distributionChannelOptions = [
         { label: 'All', value: 'All' }
-        // Will be populated from Apex
     ];
     
     accountStatusOptions = [
@@ -66,18 +71,56 @@ export default class SalesMapFilters extends LightningElement {
         { label: 'Training Target not reached', value: '4' }
     ];
     
-    get showBrands() {
-        return this.userAffiliateCode === 'W-US' || 
-               this.userAffiliateCode === 'S-US';
+    connectedCallback() {
+        this.loadUserInfo();
     }
     
+    async loadUserInfo() {
+        try {
+            const user = await getUser();
+            this.isAdmin = user.Profile.PermissionsModifyAllData;
+            
+            // Build WSA Affiliates condition
+            if (user.WSA_Affiliates__c) {
+                const affiliatesList = user.WSA_Affiliates__c.split(';');
+                const formattedList = affiliatesList.map(aff => `'${aff}'`);
+                this.userWSAAffiliates = `(${formattedList.join(',')})`;
+            }
+        } catch (error) {
+            console.error('Error loading user info:', error);
+        }
+    }
+    
+    // Dynamic conditions based on user permissions (matching old Aura)
     get territoryConditions() {
-        // Build conditions based on user permissions
+        if (this.isAdmin) {
+            return 'isActive__c = true';
+        }
+        
+        if (this.userWSAAffiliates) {
+            return `Affiliate__r.Affiliate_Code__c IN ${this.userWSAAffiliates} AND isActive__c = true`;
+        }
+        
         return 'isActive__c = true';
     }
     
     get trainerConditions() {
-        return "IsActive = true AND Sivantos_Department_del__c = 'Audiology Trainer'";
+        const baseCondition = "IsActive = true AND Sivantos_Department_del__c = 'Audiology Trainer'";
+        
+        if (this.isAdmin) {
+            return baseCondition;
+        }
+        
+        if (this.userWSAAffiliates) {
+            return `Affiliate_Code_from_Affiliate__c IN ${this.userWSAAffiliates} AND ${baseCondition}`;
+        }
+        
+        return baseCondition;
+    }
+    
+    get showBrands() {
+        return this.userAffiliateCode === 'W-US' || 
+               this.userAffiliateCode === 'S-US';
     }
     
     handleSearchTermChange(event) {
@@ -171,7 +214,7 @@ export default class SalesMapFilters extends LightningElement {
             selectedTerritories: this.selectedTerritories,
             selectedTrainers: this.selectedTrainers,
             selectedCampaigns: this.selectedCampaigns,
-            selectedBrands: this.selectedBrands.join(';'),
+            brands: this.selectedBrands.join(';'),
             selectedLegalHierarchies: this.selectedLegalHierarchies,
             selectedBusinessHierarchies: this.selectedBusinessHierarchies,
             selectedDisChannelFilter: this.selectedDistributionChannels.join(';'),
@@ -192,6 +235,7 @@ export default class SalesMapFilters extends LightningElement {
     handleReset() {
         // Reset all filters
         this.searchTerm = '';
+        this.location = '';
         this.radius = 50;
         this.unit = 'km';
         this.onlyMainAccounts = false;
@@ -206,6 +250,14 @@ export default class SalesMapFilters extends LightningElement {
         this.selectedAccountStatus = ['All'];
         this.selectedMerchantStatus = ['All'];
         this.salesTargetFilter = '';
+        
+        // Clear the multi-select components
+        const multiSelects = this.template.querySelectorAll('c-multi-select-lookup-lwc');
+        multiSelects.forEach(comp => {
+            if (comp.clear) {
+                comp.clear();
+            }
+        });
         
         this.dispatchEvent(new CustomEvent('reset'));
     }

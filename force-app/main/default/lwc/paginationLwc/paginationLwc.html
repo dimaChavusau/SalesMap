@@ -1,9 +1,10 @@
+<!-- paginationLwc.html - FIXED -->
 <template>
     <div class="pagination-container">
         <div class="pagination">
             <template for:each={pageList} for:item="page">
                 <button 
-                    key={page}
+                    key={page.value}
                     class={page.class}
                     data-page={page.value}
                     onclick={handlePageClick}>
