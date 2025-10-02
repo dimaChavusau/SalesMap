@@ -1,0 +1,68 @@
+<template>
+    <template if:true={showLegend}>
+        <div class={legendContainerClass}>
+            <!-- Legend Header -->
+            <div class="legend-header" onclick={handleToggleLegend}>
+                <lightning-icon 
+                    icon-name="utility:list" 
+                    size="x-small"
+                    class="header-icon">
+                </lightning-icon>
+                <span class="legend-title">{title}</span>
+                <lightning-icon 
+                    icon-name={toggleIconName}
+                    size="x-small"
+                    class="toggle-icon">
+                </lightning-icon>
+            </div>
+            
+            <!-- Legend Items -->
+            <template if:true={isExpanded}>
+                <div class="legend-body">
+                    <table class="legend-table">
+                        <tbody>
+                            <template for:each={legendItems} for:item="item">
+                                <tr key={item.id} 
+                                    class={item.cssClass}
+                                    data-id={item.id}
+                                    onclick={handleLegendItemClick}
+                                    title="Click to show/hide markers">
+                                    
+                                    <!-- Icon/Color Indicator -->
+                                    <td class="legend-icon-cell">
+                                        <template if:true={item.iconUrl}>
+                                            <img 
+                                                src={item.iconUrl} 
+                                                alt={item.label}
+                                                class={item.iconClass}
+                                                width="20"
+                                                height="20" />
+                                        </template>
+                                        <template if:false={item.iconUrl}>
+                                            <div 
+                                                class={item.iconClass}
+                                                style={item.colorStyle}>
+                                            </div>
+                                        </template>
+                                    </td>
+                                    
+                                    <!-- Label -->
+                                    <td class="legend-label-cell">
+                                        <span class="legend-label">{item.label}</span>
+                                    </td>
+                                    
+                                    <!-- Count (optional) -->
+                                    <template if:true={item.count}>
+                                        <td class="legend-count-cell">
+                                            <span class="legend-count">({item.count})</span>
+                                        </td>
+                                    </template>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </template>
+        </div>
+    </template>
+</template>

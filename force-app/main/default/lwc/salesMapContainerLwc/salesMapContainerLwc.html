@@ -41,7 +41,7 @@
                     <!-- Map Component with Controls -->
                     <div class="map-wrapper">
                         <lightning-map
-                            map-markers={allMapMarkers}
+                            map-markers={displayedMapMarkers}
                             zoom-level={zoomLevel}
                             center={mapCenter}
                             list-view="hidden"
@@ -161,11 +161,14 @@
                         </template>
 
                         <!-- Legend -->
-                        <c-sales-map-legend
+                        <c-clickable-map-legend
+                            title="Legend"
                             selected-view={selectedView}
-                            legend-items={legendItems}
-                            show-legend={showLegend}>
-                        </c-sales-map-legend>
+                            items={legendItems}
+                            onlegenditemtoggle={handleLegendItemToggle}
+                            onlegendreset={handleLegendReset}
+                            onshowtoast={handleShowToast}>
+                        </c-clickable-map-legend>
                     </div>
 
                     <!-- View Options -->
