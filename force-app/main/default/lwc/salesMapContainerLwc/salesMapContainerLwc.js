@@ -24,6 +24,14 @@ export default class SalesMapContainerLwc extends LightningElement {
     @track filters = {};
     @track filterPanelOpen = true;
     
+
+    @track showInfoPanel = false;
+    @track selectedAccountName = '';
+    @track selectedAccountNumber = '';
+    @track selectedAccountBrandLogo = '';
+    @track selectedAccountAddress = '';
+    @track selectedAccount = null;
+    @track selectedAccountData = {};
     // NEW: Geolocation drag features
     @track showGeolocationModal = false;
     @track draggedMarker = null;
@@ -358,51 +366,82 @@ export default class SalesMapContainerLwc extends LightningElement {
         try {
             const selectedValue = event.target.selectedMarkerValue;
             this.selectedMarkerValue = selectedValue;
-            
-            // Find the selected account
             const account = this.accounts.find(acc => acc.Id === selectedValue);
-            
             if (account) {
                 this.selectedAccount = account;
                 this.selectedAccountName = account.Name;
-                this.selectedAccountNumber = `Customer #: ${account.Bill_to_Number__c || 'N/A'}`;
+                this.selectedAccountNumber = account.Bill_to_Number__c || 'N/A';
                 this.selectedAccountBrandLogo = account.Brand_Logo__c || '';
                 this.selectedAccountAddress = this.formatAddress(account);
-                
-                // FIXED: Build structured data object for display
                 this.selectedAccountData = {
-                    // Sales Visit data
                     nextSalesVisit: account.Planned_Next_Sales_Visit_URL__c || 'n/a',
                     lastSalesVisit: account.Last_Sales_Visit_URL__c || 'n/a',
                     targetVisits: account.Planned_Visits__c || 'n/a',
                     actualVisits: account.Actual_Visits_Total__c || 'n/a',
-                    
-                    // Training Event data
                     nextTrainingEvent: account.Next_Planned_Training_Event_URL__c || 'n/a',
                     lastTrainingEvent: account.Last_Training_Event_URL__c || 'n/a',
                     targetTrainings: account.Planned_Trainings__c || 'n/a',
                     actualTrainings: account.Actual_Trainings_Total__c || 'n/a',
-                    
-                    // Contact Info
                     phone: account.Phone || 'n/a',
-                    
-                    // Business Info
-                    legalHierarchy: this.getLegalHierarchyDisplay(account),
-                    businessHierarchy: this.getBusinessHierarchyDisplay(account),
                     territory: account.Territory__r?.Name || 'n/a',
                     brand: account.Own_Brand_formula__c || 'n/a',
                     segmentationPOS: account.Segment_Text_POS1__c || 'n/a',
                     segmentationCG: account.Segment_Text_CG__c || 'n/a',
                     segmentationOwner: account.Segment_Text_Owner__c || 'n/a',
-                    distributionChannel: account.Distribution_Channel__c || 'n/a'
+                    distributionChannel: account.Distribution_Channel__c || 'n/a',
+                    legalHierarchy: this.formatHierarchy(account.Customer_Hierarchy_2_Description__r),
+                    businessHierarchy: this.formatHierarchy(account.Pricing_Terms_Descripton__r)
                 };
-                
-                // FIXED: Show custom info panel
                 this.showInfoPanel = true;
             }
         } catch (error) {
             console.error('Error handling marker selection:', error);
-            this.handleError('Failed to display account info', error);
+        }
+    }
+
+    formatHierarchy(hierarchy) {
+        if (!hierarchy) return 'n/a';
+        let display = hierarchy.Name;
+        if (hierarchy.Sum_of_POS__c !== undefined && hierarchy.Sum_of_POS__c !== null) {
+            display += ` (${hierarchy.Sum_of_POS__c})`;
+        }
+        return display;
+    }
+
+    formatAddress(account) {
+        if (!account?.BillingAddress) return 'N/A';
+        const addr = account.BillingAddress;
+        const parts = [];
+        if (addr.street) parts.push(addr.street);
+        if (addr.postalCode || addr.city) {
+            parts.push(`${addr.postalCode || ''} ${addr.city || ''}`.trim());
+        }
+        if (addr.country) parts.push(addr.country);
+        return parts.join(', ') || 'N/A';
+    }
+
+    handleCloseInfoPanel() {
+        this.showInfoPanel = false;
+        this.selectedMarkerValue = null;
+        this.selectedAccount = null;
+    }
+
+    handleNavigate() {
+        if (this.selectedAccountAddress) {
+            window.open(`https://maps.google.com/maps?daddr=${encodeURIComponent(this.selectedAccountAddress)}`, '_blank');
+        }
+    }
+
+    handleEditAccount() {
+        if (this.selectedAccount) {
+            window.open(`/${this.selectedAccount.Id}/e?retURL=${this.selectedAccount.Id}`, '_blank');
+        }
+    }
+
+    handleScheduleEvent() {
+        if (this.selectedAccount) {
+            this.selectedAccountId = this.selectedAccount.Id;
+            this.showEventModal = true;
         }
     }
 
@@ -1179,7 +1218,6 @@ export default class SalesMapContainerLwc extends LightningElement {
         this.selectedMarkerValue = event.target.selectedMarkerValue;
         
         // Attach event listeners when a marker is selected (info window opens)
-        this.attachMarkerEventListeners();
     }
 
     handleMainAccountToggle(event) {
