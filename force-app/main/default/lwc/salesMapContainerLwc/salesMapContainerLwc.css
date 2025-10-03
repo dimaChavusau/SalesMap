@@ -710,3 +710,188 @@ z-index: 98;
         max-height: 50vh !important;
     }
 }
+
+.THIS .custom-info-panel {
+    position: absolute !important;
+    top: 70px !important;
+    right: 10px !important;
+    width: 450px !important;
+    max-width: calc(100vw - 20px) !important;
+    max-height: calc(100vh - 100px) !important;
+    background: white !important;
+    border-radius: 8px !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25) !important;
+    z-index: 100000 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    animation: slideInRight 0.3s ease !important;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.THIS .info-panel-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    padding: 16px !important;
+    background: linear-gradient(135deg, #0176d3 0%, #005fb2 100%) !important;
+    color: white !important;
+    border-bottom: 2px solid #014486 !important;
+}
+
+.THIS .header-content {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+}
+
+.THIS .account-name {
+    margin: 0 !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    color: white !important;
+    line-height: 1.3 !important;
+}
+
+.THIS .account-number {
+    font-size: 12px !important;
+    color: rgba(255,255,255,0.9) !important;
+    font-weight: 400 !important;
+}
+
+.THIS .brand-logo-container {
+    margin-top: 8px !important;
+}
+
+.THIS .close-button {
+    flex-shrink: 0 !important;
+    color: white !important;
+}
+
+.THIS .info-panel-body {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    padding: 16px !important;
+    background: #fafafa !important;
+}
+
+.THIS .info-section {
+    background: white !important;
+    border-radius: 6px !important;
+    padding: 12px !important;
+    margin-bottom: 12px !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
+}
+
+.THIS .info-section:last-child {
+    margin-bottom: 0 !important;
+}
+
+.THIS .section-title {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: #3e3e3c !important;
+    margin: 0 0 10px 0 !important;
+    padding-bottom: 8px !important;
+    border-bottom: 1px solid #e5e5e5 !important;
+}
+
+.THIS .info-table {
+    width: 100% !important;
+    font-size: 12px !important;
+    line-height: 1.6 !important;
+}
+
+.THIS .info-table tr {
+    border-bottom: 1px solid #f4f6f9 !important;
+}
+
+.THIS .info-table tr:last-child {
+    border-bottom: none !important;
+}
+
+.THIS .info-table td {
+    padding: 6px 4px !important;
+    vertical-align: top !important;
+}
+
+.THIS .label-cell {
+    font-weight: 600 !important;
+    color: #706e8c !important;
+    width: 140px !important;
+    min-width: 140px !important;
+    padding-right: 12px !important;
+}
+
+.THIS .info-panel-actions {
+    display: flex !important;
+    gap: 8px !important;
+    padding: 12px 16px !important;
+    border-top: 1px solid #e5e5e5 !important;
+    background: white !important;
+    flex-wrap: wrap !important;
+    justify-content: space-between !important;
+}
+
+.THIS .action-button {
+    flex: 1 !important;
+    min-width: 100px !important;
+}
+
+/* Scrollbar styling */
+.THIS .info-panel-body::-webkit-scrollbar {
+    width: 6px !important;
+}
+
+.THIS .info-panel-body::-webkit-scrollbar-track {
+    background: #f4f6f9 !important;
+    border-radius: 3px !important;
+}
+
+.THIS .info-panel-body::-webkit-scrollbar-thumb {
+    background: #c9cbd2 !important;
+    border-radius: 3px !important;
+}
+
+.THIS .info-panel-body::-webkit-scrollbar-thumb:hover {
+    background: #a8aab3 !important;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .THIS .custom-info-panel {
+        top: auto !important;
+        bottom: 10px !important;
+        left: 10px !important;
+        right: 10px !important;
+        width: auto !important;
+        max-height: 60vh !important;
+    }
+    
+    .THIS .info-panel-actions {
+        flex-direction: column !important;
+    }
+    
+    .THIS .action-button {
+        width: 100% !important;
+    }
+    
+    .THIS .label-cell {
+        width: 120px !important;
+        min-width: 120px !important;
+    }
+}

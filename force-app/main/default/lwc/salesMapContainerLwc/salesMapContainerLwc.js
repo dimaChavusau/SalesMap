@@ -47,9 +47,11 @@ export default class SalesMapContainerLwc extends LightningElement {
 
     @track showInfoPanel = false;
     @track selectedAccountName = '';
-    @track selectedAccountDescription = '';
+    @track selectedAccountNumber = '';
+    @track selectedAccountBrandLogo = '';
     @track selectedAccountAddress = '';
     @track selectedAccount = null;
+    @track selectedAccountData = {};
     
     selectedMarkerValue;
     zoomLevel = 10;
@@ -312,8 +314,8 @@ export default class SalesMapContainerLwc extends LightningElement {
         const newMarkers = this.accounts
             .filter(acc => acc.BillingLatitude && acc.BillingLongitude)
             .map((acc, index) => {
-                // Use SIMPLE description for lightning-map (no interactive elements)
-                const description = buildSimpleDescription(acc);
+                // FIXED: Use only account name as description (no HTML)
+                const description = `${acc.Name} - ${acc.Bill_to_Number__c || 'N/A'}`;
                 
                 const marker = {
                     location: {
@@ -322,7 +324,7 @@ export default class SalesMapContainerLwc extends LightningElement {
                     },
                     value: acc.Id,
                     title: acc.Name,
-                    // Use simple description - interactions will be in custom panel
+                    // FIXED: Simple text description only
                     description: description,
                     icon: 'standard:account',
                     mapIcon: {
@@ -343,7 +345,6 @@ export default class SalesMapContainerLwc extends LightningElement {
                 return marker;
             });
 
-        // Apply clustering if enabled
         if (this.clusteringEnabled) {
             this.mapMarkers = this.applyMarkerClustering(newMarkers);
         } else {
@@ -364,17 +365,76 @@ export default class SalesMapContainerLwc extends LightningElement {
             if (account) {
                 this.selectedAccount = account;
                 this.selectedAccountName = account.Name;
+                this.selectedAccountNumber = `Customer #: ${account.Bill_to_Number__c || 'N/A'}`;
+                this.selectedAccountBrandLogo = account.Brand_Logo__c || '';
                 this.selectedAccountAddress = this.formatAddress(account);
                 
-                // Build rich description using the helper
-                this.selectedAccountDescription = buildMarkerDescription(account);
+                // FIXED: Build structured data object for display
+                this.selectedAccountData = {
+                    // Sales Visit data
+                    nextSalesVisit: account.Planned_Next_Sales_Visit_URL__c || 'n/a',
+                    lastSalesVisit: account.Last_Sales_Visit_URL__c || 'n/a',
+                    targetVisits: account.Planned_Visits__c || 'n/a',
+                    actualVisits: account.Actual_Visits_Total__c || 'n/a',
+                    
+                    // Training Event data
+                    nextTrainingEvent: account.Next_Planned_Training_Event_URL__c || 'n/a',
+                    lastTrainingEvent: account.Last_Training_Event_URL__c || 'n/a',
+                    targetTrainings: account.Planned_Trainings__c || 'n/a',
+                    actualTrainings: account.Actual_Trainings_Total__c || 'n/a',
+                    
+                    // Contact Info
+                    phone: account.Phone || 'n/a',
+                    
+                    // Business Info
+                    legalHierarchy: this.getLegalHierarchyDisplay(account),
+                    businessHierarchy: this.getBusinessHierarchyDisplay(account),
+                    territory: account.Territory__r?.Name || 'n/a',
+                    brand: account.Own_Brand_formula__c || 'n/a',
+                    segmentationPOS: account.Segment_Text_POS1__c || 'n/a',
+                    segmentationCG: account.Segment_Text_CG__c || 'n/a',
+                    segmentationOwner: account.Segment_Text_Owner__c || 'n/a',
+                    distributionChannel: account.Distribution_Channel__c || 'n/a'
+                };
                 
-                // Show custom info panel
+                // FIXED: Show custom info panel
                 this.showInfoPanel = true;
             }
         } catch (error) {
             console.error('Error handling marker selection:', error);
+            this.handleError('Failed to display account info', error);
         }
+    }
+
+    // FIXED: Helper to format legal hierarchy
+    getLegalHierarchyDisplay(account) {
+        if (!account.Customer_Hierarchy_2_Description__r) return 'n/a';
+        
+        let display = account.Customer_Hierarchy_2_Description__r.Name;
+        const sumOfPOS = account.Customer_Hierarchy_2_Description__r.Sum_of_POS__c;
+        
+        if (sumOfPOS !== undefined && sumOfPOS !== null) {
+            display += ` (${sumOfPOS})`;
+        } else {
+            display += ' (n/a)';
+        }
+        
+        return display;
+    }
+
+    getBusinessHierarchyDisplay(account) {
+        if (!account.Pricing_Terms_Descripton__r) return 'n/a';
+        
+        let display = account.Pricing_Terms_Descripton__r.Name;
+        const sumOfPOS = account.Pricing_Terms_Descripton__r.Sum_of_POS__c;
+        
+        if (sumOfPOS !== undefined && sumOfPOS !== null) {
+            display += ` (${sumOfPOS})`;
+        } else {
+            display += ' (n/a)';
+        }
+        
+        return display;
     }
 
     // NEW: Close info panel
@@ -382,9 +442,10 @@ export default class SalesMapContainerLwc extends LightningElement {
         this.showInfoPanel = false;
         this.selectedMarkerValue = null;
         this.selectedAccount = null;
+        this.selectedAccountData = {};
     }
 
-    // NEW: Handle navigate action
+    // NEW: Handle edit account action
     handleNavigate() {
         if (this.selectedAccountAddress) {
             const url = `https://maps.google.com/maps?daddr=${encodeURIComponent(this.selectedAccountAddress)}`;
@@ -392,7 +453,7 @@ export default class SalesMapContainerLwc extends LightningElement {
         }
     }
 
-    // NEW: Handle edit account action
+    // FIXED: Handle edit account action
     handleEditAccount() {
         if (this.selectedAccount) {
             const url = `/${this.selectedAccount.Id}/e?retURL=${this.selectedAccount.Id}`;
@@ -400,12 +461,12 @@ export default class SalesMapContainerLwc extends LightningElement {
         }
     }
 
-    // NEW: Handle schedule event action
+    // FIXED: Handle schedule event action
     handleScheduleEvent() {
         if (this.selectedAccount) {
             this.selectedAccountId = this.selectedAccount.Id;
             this.showEventModal = true;
-            this.showInfoPanel = false;
+            // Keep info panel open in background
         }
     }
 
@@ -1394,14 +1455,12 @@ export default class SalesMapContainerLwc extends LightningElement {
     handleEventCreated() {
         this.showEventModal = false;
         this.showToast('Success', 'Event created successfully', 'success');
+        // Optionally close info panel
+        // this.showInfoPanel = false;
     }
 
     handleEventClose() {
         this.showEventModal = false;
-        // Reopen info panel if there was a selected account
-        if (this.selectedAccount) {
-            this.showInfoPanel = true;
-        }
     }
 
     showToast(title, message, variant) {

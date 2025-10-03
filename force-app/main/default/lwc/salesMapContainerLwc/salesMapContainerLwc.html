@@ -1,4 +1,3 @@
-<!-- salesMapContainerLwc.html - FIXED HTML SYNTAX -->
 <template>
     <div class="sales-map-container">
         <!-- Error Boundary Display -->
@@ -49,40 +48,186 @@
                             onmarkerselect={handleMarkerSelect}
                             class="google-map">
                         </lightning-map>
+
+                        <!-- FIXED: Custom Info Panel replacing buggy description -->
                         <template if:true={showInfoPanel}>
                             <div class="custom-info-panel">
+                                <!-- Panel Header -->
                                 <div class="info-panel-header">
-                                    <h3>{selectedAccountName}</h3>
+                                    <div class="header-content">
+                                        <h3 class="account-name">{selectedAccountName}</h3>
+                                        <span class="account-number">{selectedAccountNumber}</span>
+                                        <template if:true={selectedAccountBrandLogo}>
+                                            <div class="brand-logo-container">
+                                                <lightning-formatted-rich-text 
+                                                    value={selectedAccountBrandLogo}>
+                                                </lightning-formatted-rich-text>
+                                            </div>
+                                        </template>
+                                    </div>
                                     <lightning-button-icon
                                         icon-name="utility:close"
-                                        variant="bare"
+                                        variant="bare-inverse"
                                         onclick={handleCloseInfoPanel}
-                                        alternative-text="Close">
+                                        alternative-text="Close"
+                                        class="close-button">
                                     </lightning-button-icon>
                                 </div>
+
+                                <!-- Panel Body with Formatted Content -->
                                 <div class="info-panel-body">
-                                    <lightning-formatted-rich-text
-                                        value={selectedAccountDescription}>
-                                    </lightning-formatted-rich-text>
+                                    <!-- Sales Visit Section -->
+                                    <div class="info-section">
+                                        <h4 class="section-title">
+                                            <lightning-icon icon-name="utility:event" size="x-small"></lightning-icon>
+                                            Sales Visit
+                                        </h4>
+                                        <table class="info-table">
+                                            <tr>
+                                                <td class="label-cell">next:</td>
+                                                <td>
+                                                    <lightning-formatted-rich-text 
+                                                        value={selectedAccountData.nextSalesVisit}>
+                                                    </lightning-formatted-rich-text>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="label-cell">last:</td>
+                                                <td>
+                                                    <lightning-formatted-rich-text 
+                                                        value={selectedAccountData.lastSalesVisit}>
+                                                    </lightning-formatted-rich-text>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="label-cell">Target:</td>
+                                                <td>{selectedAccountData.targetVisits}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="label-cell">Actual:</td>
+                                                <td>{selectedAccountData.actualVisits}</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+
+                                    <!-- Training Event Section -->
+                                    <div class="info-section">
+                                        <h4 class="section-title">
+                                            <lightning-icon icon-name="utility:education" size="x-small"></lightning-icon>
+                                            Training Event
+                                        </h4>
+                                        <table class="info-table">
+                                            <tr>
+                                                <td class="label-cell">next:</td>
+                                                <td>
+                                                    <lightning-formatted-rich-text 
+                                                        value={selectedAccountData.nextTrainingEvent}>
+                                                    </lightning-formatted-rich-text>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="label-cell">last:</td>
+                                                <td>
+                                                    <lightning-formatted-rich-text 
+                                                        value={selectedAccountData.lastTrainingEvent}>
+                                                    </lightning-formatted-rich-text>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="label-cell">Target:</td>
+                                                <td>{selectedAccountData.targetTrainings}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="label-cell">Actual:</td>
+                                                <td>{selectedAccountData.actualTrainings}</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+
+                                    <!-- Contact Info Section -->
+                                    <div class="info-section">
+                                        <h4 class="section-title">
+                                            <lightning-icon icon-name="utility:phone_portrait" size="x-small"></lightning-icon>
+                                            Contact Info
+                                        </h4>
+                                        <table class="info-table">
+                                            <tr>
+                                                <td class="label-cell">Address:</td>
+                                                <td>{selectedAccountAddress}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="label-cell">Phone:</td>
+                                                <td>{selectedAccountData.phone}</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+
+                                    <!-- Business Info Section -->
+                                    <div class="info-section">
+                                        <h4 class="section-title">
+                                            <lightning-icon icon-name="utility:company" size="x-small"></lightning-icon>
+                                            Business Info
+                                        </h4>
+                                        <table class="info-table">
+                                            <tr>
+                                                <td class="label-cell">Legal Hierarchy:</td>
+                                                <td>{selectedAccountData.legalHierarchy}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="label-cell">Business Hierarchy:</td>
+                                                <td>{selectedAccountData.businessHierarchy}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="label-cell">Territory:</td>
+                                                <td>{selectedAccountData.territory}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="label-cell">Brand:</td>
+                                                <td>{selectedAccountData.brand}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="label-cell">Segmentation (POS):</td>
+                                                <td>{selectedAccountData.segmentationPOS}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="label-cell">Segmentation (CG):</td>
+                                                <td>{selectedAccountData.segmentationCG}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="label-cell">Segmentation (Owner):</td>
+                                                <td>{selectedAccountData.segmentationOwner}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="label-cell">Distribution Channel:</td>
+                                                <td>{selectedAccountData.distributionChannel}</td>
+                                            </tr>
+                                        </table>
+                                    </div>
                                 </div>
+
+                                <!-- Panel Actions -->
                                 <div class="info-panel-actions">
                                     <lightning-button
                                         label="Navigate"
-                                        icon-name="utility:map"
+                                        icon-name="utility:trail"
                                         onclick={handleNavigate}
-                                        class="slds-m-right_x-small">
+                                        title="Open in Google Maps"
+                                        class="action-button">
                                     </lightning-button>
                                     <lightning-button
-                                        label="Edit Account"
+                                        label="Edit"
                                         icon-name="utility:edit"
                                         onclick={handleEditAccount}
-                                        class="slds-m-right_x-small">
+                                        title="Edit Account"
+                                        class="action-button">
                                     </lightning-button>
                                     <lightning-button
                                         label="Schedule Event"
                                         icon-name="utility:event"
                                         variant="brand"
-                                        onclick={handleScheduleEvent}>
+                                        onclick={handleScheduleEvent}
+                                        title="Create Event"
+                                        class="action-button">
                                     </lightning-button>
                                 </div>
                             </div>
