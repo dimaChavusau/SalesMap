@@ -5,96 +5,7 @@
  * @returns {string} HTML string for marker description
  */
 export function buildMarkerDescription(account) {
-    if (!account) return '';
-    
-    const html = [];
-    
-    // Header with account name and brand logo
-    html.push('<div class="info-window-custom">');
-    html.push('<div class="header" style="display:flex;align-items:center;padding-bottom:10px;border-bottom:1px solid #e5e5e5;margin-bottom:15px;">');
-    html.push(`<a style="margin-right:10px;font-size:14px;font-weight:600;color:#0176d3;text-decoration:none;" href="/${account.Id}" target="_blank">`);
-    html.push(`${account.Name} - ${account.Bill_to_Number__c || 'N/A'}</a>`);
-    if (account.Brand_Logo__c) {
-        html.push(account.Brand_Logo__c);
-    }
-    html.push('</div>');
-    
-    // Sales Visit and Training Event Information
-    html.push('<div class="sales-info" style="margin-bottom:15px;">');
-    html.push('<table style="width:100%;border-collapse:collapse;"><tr>');
-    
-    // Sales Visit Column
-    html.push('<td style="vertical-align:top;padding:5px 10px 5px 0;">');
-    html.push('<h2 style="font-size:13px;font-weight:600;margin:0 0 8px 0;">📅 Sales Visit</h2>');
-    html.push('<table style="width:100%;font-size:11px;">');
-    html.push(`<tr><td style="font-weight:600;padding-right:8px;min-width:80px;">next:</td><td>${account.Planned_Next_Sales_Visit_URL__c || 'n/a'}</td></tr>`);
-    html.push(`<tr><td style="font-weight:600;padding-right:8px;">last:</td><td>${account.Last_Sales_Visit_URL__c || 'n/a'}</td></tr>`);
-    html.push(`<tr><td style="font-weight:600;padding-right:8px;">Target:</td><td>${account.Planned_Visits__c || 'n/a'}</td></tr>`);
-    html.push(`<tr><td style="font-weight:600;padding-right:8px;">Actual:</td><td>${account.Actual_Visits_Total__c || 'n/a'}</td></tr>`);
-    html.push('</table></td>');
-    
-    // Training Event Column
-    html.push('<td style="vertical-align:top;padding:5px 10px 5px 0;">');
-    html.push('<h2 style="font-size:13px;font-weight:600;margin:0 0 8px 0;">📅 Training Event</h2>');
-    html.push('<table style="width:100%;font-size:11px;">');
-    html.push(`<tr><td style="font-weight:600;padding-right:8px;min-width:80px;">next:</td><td>${account.Next_Planned_Training_Event_URL__c || 'n/a'}</td></tr>`);
-    html.push(`<tr><td style="font-weight:600;padding-right:8px;">last:</td><td>${account.Last_Training_Event_URL__c || 'n/a'}</td></tr>`);
-    html.push(`<tr><td style="font-weight:600;padding-right:8px;">Target:</td><td>${account.Planned_Trainings__c || 'n/a'}</td></tr>`);
-    html.push(`<tr><td style="font-weight:600;padding-right:8px;">Actual:</td><td>${account.Actual_Trainings_Total__c || 'n/a'}</td></tr>`);
-    html.push('</table></td>');
-    
-    html.push('</tr></table></div>');
-    
-    // Contact Information
-    const address = formatAddress(account);
-    const phone = account.Phone || 'n/a';
-    
-    html.push('<div class="contact-info" style="margin-bottom:15px;">');
-    html.push('<table style="width:100%;"><tr><td>');
-    html.push('<h2 style="font-size:13px;font-weight:600;margin:0 0 8px 0;">📞 Contact Info</h2>');
-    html.push('<table style="width:100%;font-size:11px;">');
-    html.push(`<tr><td style="font-weight:600;padding-right:8px;min-width:80px;">Address:</td><td>${address}</td></tr>`);
-    html.push(`<tr><td style="font-weight:600;padding-right:8px;">Phone:</td><td>${phone}</td></tr>`);
-    html.push('</table></td></tr></table></div>');
-    
-    // Business Information
-    const territory = account.Territory__r?.Name || 'n/a';
-    const legalHierarchy = getLegalHierarchy(account);
-    const businessHierarchy = getBusinessHierarchy(account);
-    
-    html.push('<div class="business-info" style="margin-bottom:15px;">');
-    html.push('<table style="width:100%;"><tr><td>');
-    html.push('<h2 style="font-size:13px;font-weight:600;margin:0 0 8px 0;">🏢 Business Info</h2>');
-    html.push('</td></tr><tr><td>');
-    html.push('<table style="width:100%;font-size:11px;">');
-    html.push(`<tr><td style="font-weight:600;padding-right:8px;min-width:140px;">Legal Hierarchy:</td><td>${legalHierarchy}</td></tr>`);
-    html.push(`<tr><td style="font-weight:600;padding-right:8px;">Business Hierarchy:</td><td>${businessHierarchy}</td></tr>`);
-    html.push(`<tr><td style="font-weight:600;padding-right:8px;">Territory:</td><td>${territory}</td></tr>`);
-    html.push(`<tr><td style="font-weight:600;padding-right:8px;">Brand:</td><td>${account.Own_Brand_formula__c || 'n/a'}</td></tr>`);
-    html.push(`<tr><td style="font-weight:600;padding-right:8px;">Segmentation (POS):</td><td>${account.Segment_Text_POS1__c || 'n/a'}</td></tr>`);
-    html.push(`<tr><td style="font-weight:600;padding-right:8px;">Segmentation (CG):</td><td>${account.Segment_Text_CG__c || 'n/a'}</td></tr>`);
-    html.push(`<tr><td style="font-weight:600;padding-right:8px;">Segmentation (Owner):</td><td>${account.Segment_Text_Owner__c || 'n/a'}</td></tr>`);
-    html.push(`<tr><td style="font-weight:600;padding-right:8px;">Distribution Channel:</td><td>${account.Distribution_Channel__c || 'n/a'}</td></tr>`);
-    html.push('</table></td></tr></table></div>');
-    
-    // Action Buttons
-    const navUrl = `https://maps.google.com/maps?daddr=${encodeURIComponent(address)}`;
-    const editUrl = `/${account.Id}/e?retURL=${account.Id}`;
-    
-    html.push('<div class="info-window-option-panel" style="display:flex;gap:10px;padding-top:12px;border-top:1px solid #e5e5e5;">');
-    html.push(`<a href="${navUrl}" target="_blank" class="action-btn navi" style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:4px;background:#f4f6f9;border:1px solid #d8dde6;text-decoration:none;" title="Start navigation in Google Maps">`);
-    html.push('🧭<span class="tooltip" style="display:none;">Start navigation in google maps</span></a>');
-    
-    html.push(`<a href="${editUrl}" target="_blank" class="action-btn edit" style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:4px;background:#f4f6f9;border:1px solid #d8dde6;text-decoration:none;" title="Edit Customer Information">`);
-    html.push('✏️<span class="tooltip" style="display:none;">Edit Customer Information</span></a>');
-    
-    html.push(`<a href="javascript:void(0);" class="action-btn event" data-account-id="${account.Id}" style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:4px;background:#f4f6f9;border:1px solid #d8dde6;text-decoration:none;" title="Schedule Event">`);
-    html.push('📅<span class="tooltip" style="display:none;">Schedule Event</span></a>');
-    
-    html.push('</div>');
-    html.push('</div>');
-    
-    return html.join('');
+    return buildPanelDescription(account);
 }
 
 /**
@@ -314,4 +225,77 @@ export function getInfoWindowStyles() {
             }
         }
     `;
+}
+
+export function buildPanelDescription(account) {
+    if (!account) return '';
+    
+    const html = [];
+    
+    // Header with account name and brand logo
+    html.push('<div style="font-family: \'Salesforce Sans\', Arial, sans-serif;">');
+    
+    // Brand logo if available
+    if (account.Brand_Logo__c) {
+        html.push(`<div style="margin-bottom: 10px;">${account.Brand_Logo__c}</div>`);
+    }
+    
+    // Sales Visit and Training Event Information
+    html.push('<div style="margin-bottom: 15px;">');
+    html.push('<table style="width:100%;border-collapse:collapse;"><tr>');
+    
+    // Sales Visit Column
+    html.push('<td style="vertical-align:top;padding:5px 10px 5px 0;">');
+    html.push('<h3 style="font-size:13px;font-weight:600;margin:0 0 8px 0;">📅 Sales Visit</h3>');
+    html.push('<table style="width:100%;font-size:11px;">');
+    html.push(`<tr><td style="font-weight:600;padding-right:8px;min-width:80px;">next:</td><td>${account.Planned_Next_Sales_Visit_URL__c || 'n/a'}</td></tr>`);
+    html.push(`<tr><td style="font-weight:600;padding-right:8px;">last:</td><td>${account.Last_Sales_Visit_URL__c || 'n/a'}</td></tr>`);
+    html.push(`<tr><td style="font-weight:600;padding-right:8px;">Target:</td><td>${account.Planned_Visits__c || 'n/a'}</td></tr>`);
+    html.push(`<tr><td style="font-weight:600;padding-right:8px;">Actual:</td><td>${account.Actual_Visits_Total__c || 'n/a'}</td></tr>`);
+    html.push('</table></td>');
+    
+    // Training Event Column
+    html.push('<td style="vertical-align:top;padding:5px 10px 5px 0;">');
+    html.push('<h3 style="font-size:13px;font-weight:600;margin:0 0 8px 0;">📅 Training Event</h3>');
+    html.push('<table style="width:100%;font-size:11px;">');
+    html.push(`<tr><td style="font-weight:600;padding-right:8px;min-width:80px;">next:</td><td>${account.Next_Planned_Training_Event_URL__c || 'n/a'}</td></tr>`);
+    html.push(`<tr><td style="font-weight:600;padding-right:8px;">last:</td><td>${account.Last_Training_Event_URL__c || 'n/a'}</td></tr>`);
+    html.push(`<tr><td style="font-weight:600;padding-right:8px;">Target:</td><td>${account.Planned_Trainings__c || 'n/a'}</td></tr>`);
+    html.push(`<tr><td style="font-weight:600;padding-right:8px;">Actual:</td><td>${account.Actual_Trainings_Total__c || 'n/a'}</td></tr>`);
+    html.push('</table></td>');
+    
+    html.push('</tr></table></div>');
+    
+    // Contact Information
+    const address = formatAddress(account);
+    const phone = account.Phone || 'n/a';
+    
+    html.push('<div style="margin-bottom: 15px;">');
+    html.push('<h3 style="font-size:13px;font-weight:600;margin:0 0 8px 0;">📞 Contact Info</h3>');
+    html.push('<table style="width:100%;font-size:11px;">');
+    html.push(`<tr><td style="font-weight:600;padding-right:8px;min-width:80px;">Address:</td><td>${address}</td></tr>`);
+    html.push(`<tr><td style="font-weight:600;padding-right:8px;">Phone:</td><td>${phone}</td></tr>`);
+    html.push('</table></div>');
+    
+    // Business Information
+    const territory = account.Territory__r?.Name || 'n/a';
+    const legalHierarchy = getLegalHierarchy(account);
+    const businessHierarchy = getBusinessHierarchy(account);
+    
+    html.push('<div style="margin-bottom: 15px;">');
+    html.push('<h3 style="font-size:13px;font-weight:600;margin:0 0 8px 0;">🏢 Business Info</h3>');
+    html.push('<table style="width:100%;font-size:11px;">');
+    html.push(`<tr><td style="font-weight:600;padding-right:8px;min-width:140px;">Legal Hierarchy:</td><td>${legalHierarchy}</td></tr>`);
+    html.push(`<tr><td style="font-weight:600;padding-right:8px;">Business Hierarchy:</td><td>${businessHierarchy}</td></tr>`);
+    html.push(`<tr><td style="font-weight:600;padding-right:8px;">Territory:</td><td>${territory}</td></tr>`);
+    html.push(`<tr><td style="font-weight:600;padding-right:8px;">Brand:</td><td>${account.Own_Brand_formula__c || 'n/a'}</td></tr>`);
+    html.push(`<tr><td style="font-weight:600;padding-right:8px;">Segmentation (POS):</td><td>${account.Segment_Text_POS1__c || 'n/a'}</td></tr>`);
+    html.push(`<tr><td style="font-weight:600;padding-right:8px;">Segmentation (CG):</td><td>${account.Segment_Text_CG__c || 'n/a'}</td></tr>`);
+    html.push(`<tr><td style="font-weight:600;padding-right:8px;">Segmentation (Owner):</td><td>${account.Segment_Text_Owner__c || 'n/a'}</td></tr>`);
+    html.push(`<tr><td style="font-weight:600;padding-right:8px;">Distribution Channel:</td><td>${account.Distribution_Channel__c || 'n/a'}</td></tr>`);
+    html.push('</table></div>');
+    
+    html.push('</div>');
+    
+    return html.join('');
 }

@@ -49,7 +49,44 @@
                             onmarkerselect={handleMarkerSelect}
                             class="google-map">
                         </lightning-map>
-
+                        <template if:true={showInfoPanel}>
+                            <div class="custom-info-panel">
+                                <div class="info-panel-header">
+                                    <h3>{selectedAccountName}</h3>
+                                    <lightning-button-icon
+                                        icon-name="utility:close"
+                                        variant="bare"
+                                        onclick={handleCloseInfoPanel}
+                                        alternative-text="Close">
+                                    </lightning-button-icon>
+                                </div>
+                                <div class="info-panel-body">
+                                    <lightning-formatted-rich-text
+                                        value={selectedAccountDescription}>
+                                    </lightning-formatted-rich-text>
+                                </div>
+                                <div class="info-panel-actions">
+                                    <lightning-button
+                                        label="Navigate"
+                                        icon-name="utility:map"
+                                        onclick={handleNavigate}
+                                        class="slds-m-right_x-small">
+                                    </lightning-button>
+                                    <lightning-button
+                                        label="Edit Account"
+                                        icon-name="utility:edit"
+                                        onclick={handleEditAccount}
+                                        class="slds-m-right_x-small">
+                                    </lightning-button>
+                                    <lightning-button
+                                        label="Schedule Event"
+                                        icon-name="utility:event"
+                                        variant="brand"
+                                        onclick={handleScheduleEvent}>
+                                    </lightning-button>
+                                </div>
+                            </div>
+                        </template>
                         <!-- Map Options Bar (Positioned over map) -->
                         <div class="map-options-container">
                             <!-- Fit Map Button -->

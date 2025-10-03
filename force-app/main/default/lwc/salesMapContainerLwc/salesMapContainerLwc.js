@@ -44,6 +44,12 @@ export default class SalesMapContainerLwc extends LightningElement {
     @track showRestaurants = false;
     @track showParking = false;
     @track nearbyMarkers = [];
+
+    @track showInfoPanel = false;
+    @track selectedAccountName = '';
+    @track selectedAccountDescription = '';
+    @track selectedAccountAddress = '';
+    @track selectedAccount = null;
     
     selectedMarkerValue;
     zoomLevel = 10;
@@ -306,8 +312,8 @@ export default class SalesMapContainerLwc extends LightningElement {
         const newMarkers = this.accounts
             .filter(acc => acc.BillingLatitude && acc.BillingLongitude)
             .map((acc, index) => {
-                // Use helper to build rich HTML description
-                const description = buildMarkerDescription(acc);
+                // Use SIMPLE description for lightning-map (no interactive elements)
+                const description = buildSimpleDescription(acc);
                 
                 const marker = {
                     location: {
@@ -316,7 +322,7 @@ export default class SalesMapContainerLwc extends LightningElement {
                     },
                     value: acc.Id,
                     title: acc.Name,
-                    // CRITICAL: Use rich HTML description instead of plain text
+                    // Use simple description - interactions will be in custom panel
                     description: description,
                     icon: 'standard:account',
                     mapIcon: {
@@ -345,9 +351,62 @@ export default class SalesMapContainerLwc extends LightningElement {
         }
 
         this.updateLegend();
-        
-        // IMPORTANT: Attach event listeners after markers are rendered
-        this.attachMarkerEventListeners();
+    }
+
+    handleMarkerSelect(event) {
+        try {
+            const selectedValue = event.target.selectedMarkerValue;
+            this.selectedMarkerValue = selectedValue;
+            
+            // Find the selected account
+            const account = this.accounts.find(acc => acc.Id === selectedValue);
+            
+            if (account) {
+                this.selectedAccount = account;
+                this.selectedAccountName = account.Name;
+                this.selectedAccountAddress = this.formatAddress(account);
+                
+                // Build rich description using the helper
+                this.selectedAccountDescription = buildMarkerDescription(account);
+                
+                // Show custom info panel
+                this.showInfoPanel = true;
+            }
+        } catch (error) {
+            console.error('Error handling marker selection:', error);
+        }
+    }
+
+    // NEW: Close info panel
+    handleCloseInfoPanel() {
+        this.showInfoPanel = false;
+        this.selectedMarkerValue = null;
+        this.selectedAccount = null;
+    }
+
+    // NEW: Handle navigate action
+    handleNavigate() {
+        if (this.selectedAccountAddress) {
+            const url = `https://maps.google.com/maps?daddr=${encodeURIComponent(this.selectedAccountAddress)}`;
+            window.open(url, '_blank');
+        }
+    }
+
+    // NEW: Handle edit account action
+    handleEditAccount() {
+        if (this.selectedAccount) {
+            const url = `/${this.selectedAccount.Id}/e?retURL=${this.selectedAccount.Id}`;
+            window.open(url, '_blank');
+        }
+    }
+
+    // NEW: Handle schedule event action
+    handleScheduleEvent() {
+        if (this.selectedAccount) {
+            this.selectedAccountId = this.selectedAccount.Id;
+            this.showEventModal = true;
+            this.showInfoPanel = false;
+        }
     }
 
     attachMarkerEventListeners() {
@@ -1339,6 +1398,10 @@ export default class SalesMapContainerLwc extends LightningElement {
 
     handleEventClose() {
         this.showEventModal = false;
+        // Reopen info panel if there was a selected account
+        if (this.selectedAccount) {
+            this.showInfoPanel = true;
+        }
     }
 
     showToast(title, message, variant) {
