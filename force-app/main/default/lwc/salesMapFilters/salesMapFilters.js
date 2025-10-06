@@ -4,7 +4,6 @@ export default class SalesMapFilters extends LightningElement {
     @api userAffiliateCode;
     @api showMerchantStatusFilter = false;
     
-    // Receive initial filter data from parent
     @api 
     get initialFilterData() {
         return this._initialFilterData;
@@ -16,7 +15,6 @@ export default class SalesMapFilters extends LightningElement {
         }
     }
     
-    // Receive pre-selected filters from parent
     @api
     get preSelectedFilters() {
         return this._preSelectedFilters;
@@ -46,12 +44,13 @@ export default class SalesMapFilters extends LightningElement {
     @track selectedLegalHierarchies = [];
     @track selectedBusinessHierarchies = [];
     @track selectedDistributionChannels = [];
-    @track selectedAccountStatus = ['Active Account']; // Changed default
+    @track selectedAccountStatus = ['Active Account'];
     @track selectedMerchantStatus = ['All'];
     @track salesTargetFilter = '';
     
     _initialFilterData = {};
     _preSelectedFilters = {};
+    _searchTimeout;
     
     unitOptions = [
         { label: 'km', value: 'km' },
@@ -111,7 +110,6 @@ export default class SalesMapFilters extends LightningElement {
         return "IsActive = true AND Sivantos_Department_del__c = 'Audiology Trainer'";
     }
     
-    // Convert territories to options for dual listbox
     get territoryOptions() {
         if (!this._initialFilterData?.territories) return [];
         return this._initialFilterData.territories.map(t => ({
@@ -120,7 +118,6 @@ export default class SalesMapFilters extends LightningElement {
         }));
     }
     
-    // Convert trainers to options
     get trainerOptions() {
         if (!this._initialFilterData?.trainers) return [];
         return this._initialFilterData.trainers.map(t => ({
@@ -129,7 +126,6 @@ export default class SalesMapFilters extends LightningElement {
         }));
     }
     
-    // Convert campaigns to options
     get campaignOptions() {
         if (!this._initialFilterData?.campaigns) return [];
         return this._initialFilterData.campaigns.map(c => ({
@@ -138,7 +134,6 @@ export default class SalesMapFilters extends LightningElement {
         }));
     }
     
-    // Convert legal hierarchies to options
     get legalHierarchyOptions() {
         if (!this._initialFilterData?.legalHierarchies) return [];
         return this._initialFilterData.legalHierarchies.map(lh => ({
@@ -147,7 +142,6 @@ export default class SalesMapFilters extends LightningElement {
         }));
     }
     
-    // Convert business hierarchies to options
     get businessHierarchyOptions() {
         if (!this._initialFilterData?.businessHierarchies) return [];
         return this._initialFilterData.businessHierarchies.map(bh => ({
@@ -156,34 +150,37 @@ export default class SalesMapFilters extends LightningElement {
         }));
     }
     
-    // Get selected territory IDs
     get selectedTerritoryIds() {
         return this.selectedTerritories.map(t => t.Id || t);
     }
     
-    // Get selected trainer IDs
     get selectedTrainerIds() {
         return this.selectedTrainers.map(t => t.Id || t);
     }
     
-    // Get selected campaign IDs
     get selectedCampaignIds() {
         return this.selectedCampaigns.map(c => c.Id || c);
     }
     
-    // Get selected legal hierarchy IDs
     get selectedLegalHierarchyIds() {
         return this.selectedLegalHierarchies.map(lh => lh.Id || lh);
     }
     
-    // Get selected business hierarchy IDs
     get selectedBusinessHierarchyIds() {
         return this.selectedBusinessHierarchies.map(bh => bh.Id || bh);
     }
     
     handleSearchTermChange(event) {
         this.searchTerm = event.detail.value;
-        this.fireFilterChange();
+        
+        // Debounce search term changes
+        if (this._searchTimeout) {
+            clearTimeout(this._searchTimeout);
+        }
+        
+        this._searchTimeout = setTimeout(() => {
+            this.fireFilterChange();
+        }, 500); // Wait 500ms after user stops typing
     }
     
     handleLocationSelect(event) {
@@ -287,17 +284,36 @@ export default class SalesMapFilters extends LightningElement {
     }
     
     handleSearch() {
+        // Clear any pending debounced search
+        if (this._searchTimeout) {
+            clearTimeout(this._searchTimeout);
+        }
         this.dispatchEvent(new CustomEvent('search'));
     }
     
     handleReset() {
+        // Clear any pending debounced search
+        if (this._searchTimeout) {
+            clearTimeout(this._searchTimeout);
+        }
         this.reset();
         this.dispatchEvent(new CustomEvent('reset'));
     }
     
+    disconnectedCallback() {
+        // Clean up timeout when component is destroyed
+        if (this._searchTimeout) {
+            clearTimeout(this._searchTimeout);
+        }
+    }
+    
     @api
     reset() {
-        // Reset all filters to defaults
+        // Clear any pending debounced search
+        if (this._searchTimeout) {
+            clearTimeout(this._searchTimeout);
+        }
+        
         this.searchTerm = '';
         this.location = '';
         this.radius = 50;
