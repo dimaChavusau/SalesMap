@@ -14,6 +14,9 @@ export default class SalesMapContainerLwc extends LightningElement {
     @track isLoading = false;
     @track showEventModal = false;
     @track selectedAccountId;
+    @track selectedAccount;
+    @track showInfoPanel = false;
+    @track infoPanelPosition = { top: '50%', left: '50%' };
     @track selectedView = '--None--';
     @track showLegend = false;
     @track legendItems = [];
@@ -290,7 +293,7 @@ export default class SalesMapContainerLwc extends LightningElement {
                     },
                     value: acc.Id,
                     title: acc.Name,
-                    description: this.buildMarkerDescription(acc),
+                    description: '', // Empty description - use custom panel instead
                     icon: 'standard:account',
                     mapIcon: {
                         path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z',
@@ -314,21 +317,8 @@ export default class SalesMapContainerLwc extends LightningElement {
     }
 
     buildMarkerDescription(account) {
-        const html = [];
-        html.push(`<strong>${account.Name}</strong>`);
-        html.push(`Customer #: ${account.Bill_to_Number__c || 'N/A'}`);
-        html.push(`Address: ${this.formatAddress(account)}`);
-        html.push(`Territory: ${account.Territory__r?.Name || 'N/A'}`);
-        html.push(`Phone: ${account.Phone || 'N/A'}`);
-        
-        if (account.Last_Sales_Visit__c) {
-            html.push(`Last Sales Visit: ${this.formatDate(account.Last_Sales_Visit__c)}`);
-        }
-        if (account.Planned_next_Sales_Visit__c) {
-            html.push(`Next Sales Visit: ${this.formatDate(account.Planned_next_Sales_Visit__c)}`);
-        }
-        
-        return html.join('<br>');
+        // Return minimal description (just account name) since we use custom panel
+        return account.Name;
     }
 
     formatAddress(account) {
@@ -517,6 +507,55 @@ export default class SalesMapContainerLwc extends LightningElement {
 
     handleMarkerSelect(event) {
         this.selectedMarkerValue = event.target.selectedMarkerValue;
+        
+        // Find the account for this marker
+        const accountId = this.selectedMarkerValue;
+        const account = this.accounts.find(acc => acc.Id === accountId);
+        
+        if (account) {
+            this.selectedAccount = account;
+            this.showInfoPanel = true;
+            
+            // Calculate smart position based on screen size
+            this.infoPanelPosition = this.calculatePanelPosition();
+        }
+    }
+    
+    calculatePanelPosition() {
+        const screenWidth = window.innerWidth;
+        const screenHeight = window.innerHeight;
+        const panelWidth = 600; // From CSS
+        const panelHeight = 600; // Estimated
+        
+        let top, left;
+        
+        // Position panel to the right side if there's space, otherwise center
+        if (screenWidth > 1200) {
+            // Large screen - position on right side
+            left = `${screenWidth - panelWidth - 40}px`;
+            top = '100px';
+        } else if (screenWidth > 768) {
+            // Medium screen - position top-right with some margin
+            left = `${screenWidth - panelWidth - 20}px`;
+            top = '80px';
+        } else {
+            // Small screen - center it
+            left = '50%';
+            top = '50%';
+        }
+        
+        return { top, left };
+    }
+    
+    handleInfoPanelClose() {
+        this.showInfoPanel = false;
+        this.selectedAccount = null;
+    }
+    
+    handleInfoPanelCreateEvent(event) {
+        const accountId = event.detail.accountId;
+        this.showInfoPanel = false;
+        this.openEventModal(accountId);
     }
 
     handleMainAccountToggle(event) {

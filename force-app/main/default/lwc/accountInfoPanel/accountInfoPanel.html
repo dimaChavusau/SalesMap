@@ -1,0 +1,152 @@
+<template>
+    <template if:true={isOpen}>
+        <section class={panelClass} style={panelStyle}>
+            <!-- Close Button -->
+            <button class="close-btn" onclick={handleClose} title="Close">
+                <lightning-icon icon-name="utility:close" size="small"></lightning-icon>
+            </button>
+            
+            <!-- Account Header -->
+            <div class="panel-header">
+                <a href={accountUrl} target="_blank" class="account-name">{account.Name}</a>
+                <span class="customer-number">{account.Bill_to_Number__c}</span>
+                <template if:true={brandLogo}>
+                    <div class="brand-logo" lwc:dom="manual"></div>
+                </template>
+            </div>
+            
+            <!-- Sales Info Section -->
+            <div class="info-section">
+                <div class="section-grid">
+                    <div class="section-column">
+                        <h3 class="section-title">
+                            <lightning-icon icon-name="standard:event" size="x-small"></lightning-icon>
+                            Sales Visit
+                        </h3>
+                        <table class="info-table">
+                            <tr>
+                                <td class="label">next:</td>
+                                <td lwc:dom="manual" class="next-sales-visit"></td>
+                            </tr>
+                            <tr>
+                                <td class="label">last:</td>
+                                <td lwc:dom="manual" class="last-sales-visit"></td>
+                            </tr>
+                            <tr>
+                                <td class="label">Target:</td>
+                                <td>{plannedVisits}</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Actual:</td>
+                                <td>{actualVisits}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class="section-column">
+                        <h3 class="section-title">
+                            <lightning-icon icon-name="standard:event" size="x-small"></lightning-icon>
+                            Training Event
+                        </h3>
+                        <table class="info-table">
+                            <tr>
+                                <td class="label">next:</td>
+                                <td lwc:dom="manual" class="next-training-event"></td>
+                            </tr>
+                            <tr>
+                                <td class="label">last:</td>
+                                <td lwc:dom="manual" class="last-training-event"></td>
+                            </tr>
+                            <tr>
+                                <td class="label">Target:</td>
+                                <td>{plannedTrainings}</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Actual:</td>
+                                <td>{actualTrainings}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contact Info Section -->
+            <div class="info-section">
+                <h3 class="section-title">
+                    <lightning-icon icon-name="standard:contact" size="x-small"></lightning-icon>
+                    Contact Info
+                </h3>
+                <table class="info-table">
+                    <tr>
+                        <td class="label">Address:</td>
+                        <td>{formattedAddress}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Phone:</td>
+                        <td>{phone}</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <!-- Business Info Section -->
+            <div class="info-section">
+                <h3 class="section-title">
+                    <lightning-icon icon-name="standard:account" size="x-small"></lightning-icon>
+                    Business Info
+                </h3>
+                <table class="info-table">
+                    <tr>
+                        <td class="label">Legal Hierarchy:</td>
+                        <td>{legalHierarchy}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Business Hierarchy:</td>
+                        <td>{businessHierarchy}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Territory:</td>
+                        <td>{territory}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Brand:</td>
+                        <td>{brand}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Segmentation (POS):</td>
+                        <td>{segmentationPOS}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Segmentation (CG):</td>
+                        <td>{segmentationCG}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Segmentation (Owner):</td>
+                        <td>{segmentationOwner}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Distribution Channel:</td>
+                        <td>{distributionChannel}</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <a href={navigationUrl} target="_blank" class="action-btn" title="Start navigation in Google Maps">
+                    <lightning-icon icon-name="utility:location" size="small"></lightning-icon>
+                    <span>Navigate</span>
+                </a>
+                <a href={editUrl} target="_blank" class="action-btn" title="Edit Customer Information">
+                    <lightning-icon icon-name="utility:edit" size="small"></lightning-icon>
+                    <span>Edit</span>
+                </a>
+                <button class="action-btn" onclick={handleCreateEvent} title="Schedule Event">
+                    <lightning-icon icon-name="utility:event" size="small"></lightning-icon>
+                    <span>Event</span>
+                </button>
+            </div>
+        </section>
+        
+        <div class="panel-backdrop" onclick={handleClose}></div>
+    </template>
+</template>

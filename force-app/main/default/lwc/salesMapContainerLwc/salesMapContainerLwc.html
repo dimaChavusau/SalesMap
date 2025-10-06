@@ -111,5 +111,14 @@
                 onclose={handleEventClose}>
             </c-account-quick-event-lwc>
         </template>
+        
+        <!-- Account Info Panel -->
+        <c-account-info-panel
+            account={selectedAccount}
+            is-open={showInfoPanel}
+            position={infoPanelPosition}
+            onclose={handleInfoPanelClose}
+            oncreateevent={handleInfoPanelCreateEvent}>
+        </c-account-info-panel>
     </div>
 </template>
