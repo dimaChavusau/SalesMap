@@ -292,8 +292,8 @@ export default class SalesMapContainerLwc extends LightningElement {
                         Longitude: acc.BillingLongitude
                     },
                     value: acc.Id,
-                    title: acc.Name,
-                    description: '', // Empty description - use custom panel instead
+                    //title: acc.Name,
+                    //description: '',
                     icon: 'standard:account',
                     mapIcon: {
                         path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z',
@@ -514,38 +514,131 @@ export default class SalesMapContainerLwc extends LightningElement {
         
         if (account) {
             this.selectedAccount = account;
-            this.showInfoPanel = true;
             
-            // Calculate smart position based on screen size
-            this.infoPanelPosition = this.calculatePanelPosition();
+            // Calculate position based on marker location
+            // Wait a tick for the map to update
+            setTimeout(() => {
+                this.positionPanelNearMarker(account);
+            }, 100);
+            
+            this.showInfoPanel = true;
+        }
+    }
+
+    positionPanelNearMarker(account) {
+        const mapElement = this.template.querySelector('lightning-map');
+        if (!mapElement) {
+            this.infoPanelPosition = this.calculateFixedPanelPosition();
+            return;
+        }
+        
+        const mapRect = mapElement.getBoundingClientRect();
+        const screenWidth = window.innerWidth;
+        const panelWidth = 600;
+        const panelHeight = 600;
+        
+        // Simple quadrant-based positioning
+        const mapCenterX = mapRect.left + (mapRect.width / 2);
+        const mapCenterY = mapRect.top + (mapRect.height / 2);
+        
+        // Assume marker is roughly in the center of current view
+        // Position panel to the side with more space
+        let left, top;
+        
+        if (mapCenterX < screenWidth / 2) {
+            // Marker on left side, show panel on right
+            left = Math.min(mapCenterX + 100, screenWidth - panelWidth - 20);
+        } else {
+            // Marker on right side, show panel on left
+            left = Math.max(mapCenterX - panelWidth - 100, 20);
+        }
+        
+        // Center vertically around map center
+        top = Math.max(80, Math.min(mapCenterY - panelHeight/2, screenHeight - panelHeight - 20));
+        
+        this.infoPanelPosition = {
+            top: `${top}px`,
+            left: `${left}px`
+        };
+    }
+
+    calculateMarkerScreenPosition(lat, lng, mapRect) {
+        try {
+            // Get map center and bounds from the current map state
+            const mapCenter = this.mapCenter.location;
+            
+            // Approximate conversion from lat/lng to screen coordinates
+            // This is simplified and works best for smaller zoom levels
+            const latRange = 0.1 / Math.pow(2, this.zoomLevel - 10); // Approximate visible range
+            const lngRange = 0.1 / Math.pow(2, this.zoomLevel - 10);
+            
+            // Calculate relative position (0 to 1)
+            const relativeX = (lng - mapCenter.Longitude + lngRange/2) / lngRange;
+            const relativeY = (mapCenter.Latitude - lat + latRange/2) / latRange;
+            
+            // Convert to screen coordinates
+            const x = mapRect.left + (relativeX * mapRect.width);
+            const y = mapRect.top + (relativeY * mapRect.height);
+            
+            // Validate the position is within reasonable bounds
+            if (x < 0 || x > window.innerWidth || y < 0 || y > window.innerHeight) {
+                return null;
+            }
+            
+            return { x, y };
+        } catch (error) {
+            console.error('Error calculating marker position:', error);
+            return null;
+        }
+    }
+
+    calculateFixedPanelPosition() {
+        // Fallback to fixed position
+        const screenWidth = window.innerWidth;
+        
+        if (screenWidth > 1200) {
+            return { 
+                top: '100px', 
+                left: 'calc(100% - 620px)'
+            };
+        } else if (screenWidth > 768) {
+            return { 
+                top: '80px', 
+                left: 'calc(100% - 620px)'
+            };
+        } else {
+            return { 
+                top: '50%', 
+                left: '50%'
+            };
+        }
+    }
+
+    calculateFixedPanelPosition() {
+        const screenWidth = window.innerWidth;
+        
+        // Position the panel in a fixed location that works well
+        if (screenWidth > 1200) {
+            // Large screen - position on right side with margin
+            return { 
+                top: '100px', 
+                left: 'calc(100% - 620px)' // 600px panel + 20px margin
+            };
+        } else if (screenWidth > 768) {
+            // Medium screen - position top-right
+            return { 
+                top: '80px', 
+                left: 'calc(100% - 620px)'
+            };
+        } else {
+            // Small screen - center it
+            return { 
+                top: '50%', 
+                left: '50%'
+            };
         }
     }
     
-    calculatePanelPosition() {
-        const screenWidth = window.innerWidth;
-        const screenHeight = window.innerHeight;
-        const panelWidth = 600; // From CSS
-        const panelHeight = 600; // Estimated
-        
-        let top, left;
-        
-        // Position panel to the right side if there's space, otherwise center
-        if (screenWidth > 1200) {
-            // Large screen - position on right side
-            left = `${screenWidth - panelWidth - 40}px`;
-            top = '100px';
-        } else if (screenWidth > 768) {
-            // Medium screen - position top-right with some margin
-            left = `${screenWidth - panelWidth - 20}px`;
-            top = '80px';
-        } else {
-            // Small screen - center it
-            left = '50%';
-            top = '50%';
-        }
-        
-        return { top, left };
-    }
     
     handleInfoPanelClose() {
         this.showInfoPanel = false;

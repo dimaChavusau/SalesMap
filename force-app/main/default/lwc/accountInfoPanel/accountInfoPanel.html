@@ -1,6 +1,6 @@
 <template>
     <template if:true={isOpen}>
-        <section class={panelClass} style={panelStyle}>
+        <section class={panelClass} style={computedStyle}>
             <!-- Close Button -->
             <button class="close-btn" onclick={handleClose} title="Close">
                 <lightning-icon icon-name="utility:close" size="small"></lightning-icon>

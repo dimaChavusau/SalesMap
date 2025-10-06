@@ -7,9 +7,14 @@
     max-width: 90vw;
     max-height: 80vh;
     overflow-y: auto;
-    z-index: 9999;
+    z-index: 10000;
     padding: 20px;
     animation: slideIn 0.3s ease-out;
+}
+
+/* Remove transform for non-centered panels */
+.account-info-panel:not(.centered) {
+    transform: none;
 }
 
 /* Center transform only for centered positioning */
@@ -20,11 +25,11 @@
 @keyframes slideIn {
     from {
         opacity: 0;
-        transform: translateY(-20px);
+        margin-top: -20px;
     }
     to {
         opacity: 1;
-        transform: translateY(0);
+        margin-top: 0;
     }
 }
 
@@ -74,6 +79,7 @@
     padding: 4px;
     border-radius: 4px;
     transition: background-color 0.2s;
+    z-index: 10; /* Ensure it's above other elements */
 }
 
 .close-btn:hover {
@@ -85,8 +91,10 @@
     align-items: center;
     gap: 12px;
     padding-bottom: 16px;
+    padding-right: 40px; /* Add space for close button */
     border-bottom: 2px solid #e5e5e5;
     margin-bottom: 16px;
+    position: relative; /* For absolute positioning of close button */
 }
 
 .account-name {
@@ -94,6 +102,8 @@
     font-weight: 600;
     color: #0176d3;
     text-decoration: none;
+    flex-shrink: 1; /* Allow name to shrink if needed */
+    min-width: 0; /* Allow text truncation */
 }
 
 .account-name:hover {
@@ -103,10 +113,21 @@
 .customer-number {
     font-size: 14px;
     color: #706e8c;
+    flex-shrink: 0; /* Don't shrink customer number */
 }
 
 .brand-logo {
-    margin-left: auto;
+    margin-left: auto; /* Push to the right */
+    flex-shrink: 0; /* Don't shrink logo */
+    max-width: 80px; /* Limit logo width */
+    display: flex;
+    align-items: center;
+}
+
+.brand-logo img {
+    max-width: 100%;
+    max-height: 40px;
+    height: auto;
 }
 
 .info-section {

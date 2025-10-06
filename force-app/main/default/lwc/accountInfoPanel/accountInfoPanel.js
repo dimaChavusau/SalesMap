@@ -112,6 +112,10 @@ export default class AccountInfoPanel extends LightningElement {
             this.insertHtmlContent();
         }
     }
+
+    get computedStyle() {
+        return `top: ${this.position.top}; left: ${this.position.left}; right: auto; bottom: auto;`;
+    }
     
     processAccountData() {
         // Any data processing needed
