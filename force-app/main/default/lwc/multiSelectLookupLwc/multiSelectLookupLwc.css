@@ -1,10 +1,134 @@
-.multi-select-container {
-    margin: 5px 0;
+.multi-select-lookup {
+    position: relative;
+    width: 100%;
+}
+
+.lookup-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #3e3e3c;
+}
+
+.lookup-input-container {
+    position: relative;
+}
+
+.lookup-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #d8dde6;
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 1000;
+    margin-top: -1px;
+}
+
+.dropdown-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #f4f6f9;
+    transition: background-color 0.1s ease;
+}
+
+.dropdown-item:hover {
+    background-color: #f4f6f9;
+}
+
+.dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.dropdown-item.loading,
+.dropdown-item.no-results {
+    justify-content: center;
+    cursor: default;
+    color: #706e8c;
+    font-size: 12px;
+    padding: 12px;
+}
+
+.dropdown-item.loading:hover,
+.dropdown-item.no-results:hover {
+    background-color: white;
+}
+
+.item-icon {
+    flex-shrink: 0;
+}
+
+.item-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.item-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: #181818;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.item-subtitle {
+    font-size: 11px;
+    color: #706e8c;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-top: 2px;
 }
 
 .selected-items {
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;
-    margin-top: 5px;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 8px;
+    background: #fafaf9;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    min-height: 40px;
+}
+
+.selected-items lightning-pill {
+    --slds-c-pill-color-background: #0176d3;
+    --slds-c-pill-text-color: #ffffff;
+    --slds-c-pill-radius-border: 12px;
+}
+
+/* Scrollbar styling for dropdown */
+.lookup-dropdown::-webkit-scrollbar {
+    width: 6px;
+}
+
+.lookup-dropdown::-webkit-scrollbar-track {
+    background: #f4f6f9;
+}
+
+.lookup-dropdown::-webkit-scrollbar-thumb {
+    background: #c9c9c9;
+    border-radius: 3px;
+}
+
+.lookup-dropdown::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
 }

@@ -4,7 +4,37 @@ export default class SalesMapFilters extends LightningElement {
     @api userAffiliateCode;
     @api showMerchantStatusFilter = false;
     
+    // Receive initial filter data from parent
+    @api 
+    get initialFilterData() {
+        return this._initialFilterData;
+    }
+    set initialFilterData(value) {
+        this._initialFilterData = value;
+        if (value && value.distributionChannels) {
+            this.distributionChannelOptions = value.distributionChannels;
+        }
+    }
+    
+    // Receive pre-selected filters from parent
+    @api
+    get preSelectedFilters() {
+        return this._preSelectedFilters;
+    }
+    set preSelectedFilters(value) {
+        this._preSelectedFilters = value;
+        if (value) {
+            if (value.selectedTerritories) {
+                this.selectedTerritories = value.selectedTerritories;
+            }
+            if (value.selectedTrainers) {
+                this.selectedTrainers = value.selectedTrainers;
+            }
+        }
+    }
+    
     @track searchTerm = '';
+    @track location = '';
     @track radius = 50;
     @track unit = 'km';
     @track onlyMainAccounts = false;
@@ -16,9 +46,12 @@ export default class SalesMapFilters extends LightningElement {
     @track selectedLegalHierarchies = [];
     @track selectedBusinessHierarchies = [];
     @track selectedDistributionChannels = [];
-    @track selectedAccountStatus = ['All'];
+    @track selectedAccountStatus = ['Active Account']; // Changed default
     @track selectedMerchantStatus = ['All'];
     @track salesTargetFilter = '';
+    
+    _initialFilterData = {};
+    _preSelectedFilters = {};
     
     unitOptions = [
         { label: 'km', value: 'km' },
@@ -34,7 +67,6 @@ export default class SalesMapFilters extends LightningElement {
     
     distributionChannelOptions = [
         { label: 'All', value: 'All' }
-        // Will be populated from Apex
     ];
     
     accountStatusOptions = [
@@ -72,12 +104,81 @@ export default class SalesMapFilters extends LightningElement {
     }
     
     get territoryConditions() {
-        // Build conditions based on user permissions
         return 'isActive__c = true';
     }
     
     get trainerConditions() {
         return "IsActive = true AND Sivantos_Department_del__c = 'Audiology Trainer'";
+    }
+    
+    // Convert territories to options for dual listbox
+    get territoryOptions() {
+        if (!this._initialFilterData?.territories) return [];
+        return this._initialFilterData.territories.map(t => ({
+            label: t.Name,
+            value: t.Id
+        }));
+    }
+    
+    // Convert trainers to options
+    get trainerOptions() {
+        if (!this._initialFilterData?.trainers) return [];
+        return this._initialFilterData.trainers.map(t => ({
+            label: t.Name,
+            value: t.Id
+        }));
+    }
+    
+    // Convert campaigns to options
+    get campaignOptions() {
+        if (!this._initialFilterData?.campaigns) return [];
+        return this._initialFilterData.campaigns.map(c => ({
+            label: c.Name,
+            value: c.Id
+        }));
+    }
+    
+    // Convert legal hierarchies to options
+    get legalHierarchyOptions() {
+        if (!this._initialFilterData?.legalHierarchies) return [];
+        return this._initialFilterData.legalHierarchies.map(lh => ({
+            label: lh.Name,
+            value: lh.Id
+        }));
+    }
+    
+    // Convert business hierarchies to options
+    get businessHierarchyOptions() {
+        if (!this._initialFilterData?.businessHierarchies) return [];
+        return this._initialFilterData.businessHierarchies.map(bh => ({
+            label: bh.Name,
+            value: bh.Id
+        }));
+    }
+    
+    // Get selected territory IDs
+    get selectedTerritoryIds() {
+        return this.selectedTerritories.map(t => t.Id || t);
+    }
+    
+    // Get selected trainer IDs
+    get selectedTrainerIds() {
+        return this.selectedTrainers.map(t => t.Id || t);
+    }
+    
+    // Get selected campaign IDs
+    get selectedCampaignIds() {
+        return this.selectedCampaigns.map(c => c.Id || c);
+    }
+    
+    // Get selected legal hierarchy IDs
+    get selectedLegalHierarchyIds() {
+        return this.selectedLegalHierarchies.map(lh => lh.Id || lh);
+    }
+    
+    // Get selected business hierarchy IDs
+    get selectedBusinessHierarchyIds() {
+        return this.selectedBusinessHierarchies.map(bh => bh.Id || bh);
     }
     
     handleSearchTermChange(event) {
@@ -86,7 +187,7 @@ export default class SalesMapFilters extends LightningElement {
     }
     
     handleLocationSelect(event) {
-        this.location = event.detail.location;
+        this.location = event.detail.value;
         this.fireFilterChange();
     }
     
@@ -190,8 +291,15 @@ export default class SalesMapFilters extends LightningElement {
     }
     
     handleReset() {
-        // Reset all filters
+        this.reset();
+        this.dispatchEvent(new CustomEvent('reset'));
+    }
+    
+    @api
+    reset() {
+        // Reset all filters to defaults
         this.searchTerm = '';
+        this.location = '';
         this.radius = 50;
         this.unit = 'km';
         this.onlyMainAccounts = false;
@@ -203,10 +311,8 @@ export default class SalesMapFilters extends LightningElement {
         this.selectedLegalHierarchies = [];
         this.selectedBusinessHierarchies = [];
         this.selectedDistributionChannels = [];
-        this.selectedAccountStatus = ['All'];
+        this.selectedAccountStatus = ['Active Account'];
         this.selectedMerchantStatus = ['All'];
         this.salesTargetFilter = '';
-        
-        this.dispatchEvent(new CustomEvent('reset'));
     }
 }

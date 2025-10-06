@@ -135,15 +135,22 @@
 
 /* Lightning component overrides for better visual consistency */
 lightning-input,
-lightning-combobox,
-c-location-search-input-lwc,
-c-multi-select-lookup-lwc {
+lightning-combobox {
     --slds-c-input-text-color: #181818;
     --slds-c-input-radius-border: 4px;
 }
 
 lightning-dual-listbox {
-    --slds-c-duallistbox-option-height: 28px;
+    --slds-c-duallistbox-option-height: 32px;
+}
+
+.filter-content lightning-dual-listbox {
+    width: 100%;
+}
+
+.filter-content lightning-input,
+.filter-content lightning-combobox {
+    width: 100%;
 }
 
 /* Button styling */

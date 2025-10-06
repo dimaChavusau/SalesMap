@@ -1,22 +1,82 @@
 <template>
-    <div class="multi-select-container">
-        <lightning-record-edit-form object-api-name={objectApiName}>
-            <lightning-input-field 
-                field-name="Id"
-                variant="label-hidden"
-                onchange={handleSelection}>
-            </lightning-input-field>
-        </lightning-record-edit-form>
+    <div class="multi-select-lookup">
+        <!-- Label with Icon -->
+        <template if:true={label}>
+            <div class="lookup-label">
+                <template if:true={iconName}>
+                    <lightning-icon icon-name={iconName} size="x-small"></lightning-icon>
+                </template>
+                <span>{label}</span>
+            </div>
+        </template>
         
-        <div class="selected-items">
-            <template for:each={selectedRecords} for:item="record">
-                <lightning-pill 
-                    key={record.Id}
-                    label={record.Name}
-                    name={record.Id}
-                    onremove={handleRemove}>
-                </lightning-pill>
+        <!-- Search Input -->
+        <div class="lookup-input-container">
+            <lightning-input
+                type="search"
+                placeholder={placeholder}
+                value={searchTerm}
+                variant="label-hidden"
+                onchange={handleSearchTermChange}
+                onfocus={handleFocus}
+                onblur={handleBlur}>
+            </lightning-input>
+            
+            <!-- Search Results Dropdown -->
+            <template if:true={showDropdown}>
+                <div class="lookup-dropdown">
+                    <template if:true={isLoading}>
+                        <div class="dropdown-item loading">
+                            <lightning-spinner size="small"></lightning-spinner>
+                        </div>
+                    </template>
+                    
+                    <template if:false={isLoading}>
+                        <template if:true={hasResults}>
+                            <ul class="dropdown-list">
+                                <template for:each={searchResults} for:item="result">
+                                    <li key={result.Id} 
+                                        class="dropdown-item"
+                                        data-id={result.Id}
+                                        onclick={handleSelectItem}>
+                                        <lightning-icon 
+                                            icon-name={iconName} 
+                                            size="x-small"
+                                            class="item-icon">
+                                        </lightning-icon>
+                                        <div class="item-content">
+                                            <div class="item-title">{result.Name}</div>
+                                            <template if:true={result.subtitle}>
+                                                <div class="item-subtitle">{result.subtitle}</div>
+                                            </template>
+                                        </div>
+                                    </li>
+                                </template>
+                            </ul>
+                        </template>
+                        
+                        <template if:false={hasResults}>
+                            <div class="dropdown-item no-results">
+                                No results found
+                            </div>
+                        </template>
+                    </template>
+                </div>
             </template>
         </div>
+        
+        <!-- Selected Items as Pills -->
+        <template if:true={hasSelectedItems}>
+            <div class="selected-items">
+                <template for:each={selectedRecords} for:item="record">
+                    <lightning-pill
+                        key={record.Id}
+                        label={record.Name}
+                        name={record.Id}
+                        onremove={handleRemoveItem}>
+                    </lightning-pill>
+                </template>
+            </div>
+        </template>
     </div>
 </template>

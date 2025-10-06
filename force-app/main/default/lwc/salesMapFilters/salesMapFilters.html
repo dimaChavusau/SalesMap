@@ -60,9 +60,13 @@
                     <span class="filter-label">LOCATION</span>
                 </div>
                 <div class="filter-content">
-                    <c-location-search-input-lwc
-                        onselectlocation={handleLocationSelect}>
-                    </c-location-search-input-lwc>
+                    <lightning-input
+                        type="text"
+                        placeholder="Example: 91058, Erlangen, Germany"
+                        value={location}
+                        variant="label-hidden"
+                        onchange={handleLocationSelect}>
+                    </lightning-input>
                     <div class="location-radius-container">
                         <lightning-input
                             type="number"
@@ -92,11 +96,13 @@
                 <div class="filter-content">
                     <c-multi-select-lookup-lwc
                         object-api-name="Territory__c"
+                        label=""
+                        placeholder="Search territories..."
                         icon-name="standard:service_territory"
-                        selected-records={selectedTerritories}
                         fields="Code__c"
                         conditions={territoryConditions}
-                        onselectchange={handleTerritoryChange}>
+                        selected-records={selectedTerritories}
+                        onselectionchange={handleTerritoryChange}>
                     </c-multi-select-lookup-lwc>
                 </div>
             </div>
@@ -110,10 +116,12 @@
                 <div class="filter-content">
                     <c-multi-select-lookup-lwc
                         object-api-name="User"
+                        label=""
+                        placeholder="Search trainers..."
                         icon-name="standard:user"
-                        selected-records={selectedTrainers}
                         conditions={trainerConditions}
-                        onselectchange={handleTrainerChange}>
+                        selected-records={selectedTrainers}
+                        onselectionchange={handleTrainerChange}>
                     </c-multi-select-lookup-lwc>
                 </div>
             </div>
@@ -127,9 +135,11 @@
                 <div class="filter-content">
                     <c-multi-select-lookup-lwc
                         object-api-name="Campaign"
+                        label=""
+                        placeholder="Search campaigns..."
                         icon-name="standard:campaign"
                         selected-records={selectedCampaigns}
-                        onselectchange={handleCampaignChange}>
+                        onselectionchange={handleCampaignChange}>
                     </c-multi-select-lookup-lwc>
                 </div>
             </div>
@@ -162,14 +172,15 @@
                     <span class="filter-label">LEGAL HIERARCHIES</span>
                 </div>
                 <div class="filter-content">
-                    <c-multi-select-lookup-lwc
-                        object-api-name="Customer_Groups__c"
-                        icon-name="standard:hierarchy"
-                        selected-records={selectedLegalHierarchies}
-                        conditions="Account_Group_Typ__c = 'Strategic Group'"
-                        fields="Customer_Node_Code__c"
-                        onselectchange={handleLegalHierarchyChange}>
-                    </c-multi-select-lookup-lwc>
+                    <lightning-dual-listbox
+                        name="legalHierarchies"
+                        source-label="Available"
+                        selected-label="Selected"
+                        options={legalHierarchyOptions}
+                        value={selectedLegalHierarchyIds}
+                        size="5"
+                        onchange={handleLegalHierarchyChange}>
+                    </lightning-dual-listbox>
                 </div>
             </div>
 
@@ -180,14 +191,15 @@
                     <span class="filter-label">BUSINESS HIERARCHIES</span>
                 </div>
                 <div class="filter-content">
-                    <c-multi-select-lookup-lwc
-                        object-api-name="Customer_Groups__c"
-                        icon-name="standard:business_hours"
-                        selected-records={selectedBusinessHierarchies}
-                        conditions="Account_Group_Typ__c = 'Pricing Terms'"
-                        fields="Customer_Node_Code__c"
-                        onselectchange={handleBusinessHierarchyChange}>
-                    </c-multi-select-lookup-lwc>
+                    <lightning-dual-listbox
+                        name="businessHierarchies"
+                        source-label="Available"
+                        selected-label="Selected"
+                        options={businessHierarchyOptions}
+                        value={selectedBusinessHierarchyIds}
+                        size="5"
+                        onchange={handleBusinessHierarchyChange}>
+                    </lightning-dual-listbox>
                 </div>
             </div>
 
@@ -287,7 +299,7 @@
                 onclick={handleSearch}>
             </lightning-button>
             <lightning-button
-                label="Cancel"
+                label="Reset"
                 variant="neutral"
                 class="action-button"
                 onclick={handleReset}>

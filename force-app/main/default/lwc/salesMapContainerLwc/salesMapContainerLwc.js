@@ -20,6 +20,7 @@ export default class SalesMapContainerLwc extends LightningElement {
     @track onlyMainAccounts = false;
     @track filters = {};
     @track filterPanelOpen = true;
+    @track initialFilterData = {};
     
     selectedMarkerValue;
     zoomLevel = 10;
@@ -27,6 +28,7 @@ export default class SalesMapContainerLwc extends LightningElement {
     currentUser;
     userAffiliateCode;
     showMerchantStatusFilter = false;
+    userFunction;
     
     viewOptions = [
         { label: '--None--', value: '--None--' },
@@ -60,25 +62,43 @@ export default class SalesMapContainerLwc extends LightningElement {
     async initialize() {
         this.isLoading = true;
         try {
+            console.log('Initializing Sales Map...');
+            
             // Get current user
             const user = await getUser();
+            console.log('User loaded:', user.Name);
             this.currentUser = user;
             this.userAffiliateCode = user.Affiliate_Code_from_Affiliate__c;
+            this.userFunction = user.Sivantos_Department_del__c;
             
             // Check if should show merchant status filter
             const validCodes = ['AS-DE', 'S-DE-AD', 'S-DE-AVL', 'S-DE-CEWS', 'W-DE'];
             this.showMerchantStatusFilter = validCodes.includes(this.userAffiliateCode);
             
             // Initialize component data
+            console.log('Loading init data...');
             const initData = await init();
+            console.log('Init data loaded:', {
+                territories: initData.territories?.length,
+                trainers: initData.trainers?.length,
+                campaigns: initData.campaigns?.length
+            });
+            
             this.processInitData(initData);
+            
+            // Update view options based on user
+            this.updateViewOptions();
             
             // Set initial view based on user function
             this.setInitialView();
             
-            // Load initial accounts if applicable
-            await this.loadInitialAccounts();
+            // Auto-select filters and load accounts for certain user roles
+            await this.loadInitialAccountsWithFilters(initData);
+            
+            console.log('Initialization complete');
+            
         } catch (error) {
+            console.error('Initialization error:', error);
             this.showError('Initialization failed', error);
         } finally {
             this.isLoading = false;
@@ -86,16 +106,23 @@ export default class SalesMapContainerLwc extends LightningElement {
     }
 
     processInitData(data) {
-        // Process and prepare filter data
-        this.filters.territories = data.territories || [];
-        this.filters.trainers = data.trainers || [];
-        this.filters.campaigns = data.campaigns || [];
-        this.filters.legalHierarchies = data.legalHierarchies || [];
-        this.filters.businessHierarchies = data.businessHierarchies || [];
-        this.filters.distributionChannels = data.disChannelOptions || {};
-        
-        // Update view options based on user
-        this.updateViewOptions();
+        // Store init data for filter component
+        this.initialFilterData = {
+            territories: data.territories || [],
+            trainers: data.trainers || [],
+            campaigns: data.campaigns || [],
+            legalHierarchies: data.legalHierarchies || [],
+            businessHierarchies: data.businessHierarchies || [],
+            distributionChannels: this.buildDistributionChannelOptions(data.disChannelOptions || {})
+        };
+    }
+
+    buildDistributionChannelOptions(disChannelOptions) {
+        const options = [{ label: 'All', value: 'All' }];
+        for (const [value, label] of Object.entries(disChannelOptions)) {
+            options.push({ label, value });
+        }
+        return options;
     }
 
     updateViewOptions() {
@@ -115,47 +142,89 @@ export default class SalesMapContainerLwc extends LightningElement {
         if (this.userAffiliateCode?.startsWith('S-FR') || this.userAffiliateCode?.startsWith('W-FR')) {
             options.push({ label: 'Segmentation (CG)', value: 'segmentationCG' });
         }
+        if (this.userAffiliateCode?.startsWith('S-DE') || this.userAffiliateCode?.startsWith('AS-DE')) {
+            options.push({ label: 'Händlerstatus', value: 'haendlerstatus' });
+        }
 
         this.viewOptions = options;
     }
 
     setInitialView() {
-        const userFunction = this.currentUser?.Sivantos_Department_del__c;
-        
-        if (userFunction === 'Sales Rep') {
+        if (this.userFunction === 'Sales Rep') {
             this.selectedView = 'lastSalesVisit';
-        } else if (userFunction === 'Audiology Trainer') {
+        } else if (this.userFunction === 'Audiology Trainer') {
             this.selectedView = 'lastTrainingEvent';
-        } else if (this.filters.territories?.length > 0) {
+        } else if (this.initialFilterData.territories?.length > 0) {
             this.selectedView = 'territory';
         }
     }
 
-    async loadInitialAccounts() {
-        const userFunction = this.currentUser?.Sivantos_Department_del__c;
-        if (userFunction === 'Sales Rep' || userFunction === 'Audiology Trainer') {
-            if (this.filters.territories?.length > 0) {
-                await this.performSearch();
+    async loadInitialAccountsWithFilters(initData) {
+        const isAdmin = this.currentUser?.Profile?.PermissionsModifyAllData;
+        
+        // Only auto-load for non-admin users with specific roles
+        if (!isAdmin && 
+            (this.userFunction === 'Inside Sales' || 
+             this.userFunction === 'Sales Rep' || 
+             this.userFunction === 'Audiology Trainer')) {
+            
+            const territories = initData.territories || [];
+            const trainers = initData.trainers || [];
+            
+            // Pre-populate filters based on user role
+            if (this.userFunction !== 'Audiology Trainer' && territories.length > 0) {
+                this.filters.selectedTerritories = territories;
+            }
+            if (trainers.length > 0) {
+                this.filters.selectedTrainers = trainers;
+            }
+            
+            // Check if we have territories to search
+            if (this.userFunction !== 'Audiology Trainer' && territories.length === 0) {
+                this.showToast('Warning', 'No assigned territories for you were found.', 'warning');
+                return;
+            }
+            
+            // Only perform search if we have something to search for
+            if (territories.length > 0 || trainers.length > 0) {
+                // Perform initial search
+                try {
+                    await this.performSearch();
+                } catch (error) {
+                    console.error('Initial search error:', error);
+                    // Error is already handled in performSearch
+                }
             }
         }
     }
 
     async performSearch() {
+        // Prevent multiple simultaneous searches
+        if (this.isLoading) {
+            console.log('Search already in progress, skipping...');
+            return;
+        }
+        
         this.isLoading = true;
         try {
             const searchParams = await this.buildSearchParams();
+            console.log('Calling searchAccounts...');
             const results = await searchAccounts(searchParams);
+            console.log('Search results:', results?.length);
             this.processSearchResults(results);
         } catch (error) {
+            console.error('Search error:', error);
             if (error.body?.message !== 'No accounts found') {
                 this.showError('Search failed', error);
             } else {
-                this.accounts = [];
-                this.displayedAccounts = [];
-                this.mapMarkers = [];
+                this.showToast('Warning', 'No accounts found. Please redefine your criteria.', 'warning');
             }
+            this.accounts = [];
+            this.displayedAccounts = [];
+            this.mapMarkers = [];
         } finally {
             this.isLoading = false;
+            console.log('Search complete, loading stopped');
         }
     }
 
@@ -171,9 +240,9 @@ export default class SalesMapContainerLwc extends LightningElement {
             selectedBusinessHierarchies: this.filters.selectedBusinessHierarchies || [],
             onlyMainAccounts: this.onlyMainAccounts,
             excludeDoNotVisit: this.filters.excludeDoNotVisit || false,
-            salesTargetFilterCode: this.filters.salesTargetFilterCode,
+            salesTargetFilterCode: this.filters.salesTargetFilterCode || null,
             selectedDisChannelFilter: this.filters.selectedDisChannelFilter || '',
-            accStatusVal: this.filters.accountStatus || 'All',
+            accStatusVal: this.filters.accountStatus || 'Active Account',
             merchantStatusVal: this.filters.merchantStatusFilter || 'All',
             brands: this.filters.brands || '',
             lat: null,
@@ -183,17 +252,20 @@ export default class SalesMapContainerLwc extends LightningElement {
         // Get coordinates if location is specified
         if (this.filters.location) {
             try {
+                console.log('Getting coordinates for:', this.filters.location);
                 const coordResponse = await getCoordinates({ commonAddress: this.filters.location });
                 const coordData = JSON.parse(coordResponse);
                 if (coordData.results?.[0]) {
                     params.lat = coordData.results[0].geometry.location.lat;
                     params.lng = coordData.results[0].geometry.location.lng;
+                    console.log('Coordinates found:', params.lat, params.lng);
                 }
             } catch (error) {
-                console.error('Error getting coordinates', error);
+                console.error('Error getting coordinates:', error);
             }
         }
 
+        console.log('Built search params:', JSON.stringify(params, null, 2));
         return params;
     }
 
@@ -249,7 +321,6 @@ export default class SalesMapContainerLwc extends LightningElement {
         html.push(`Territory: ${account.Territory__r?.Name || 'N/A'}`);
         html.push(`Phone: ${account.Phone || 'N/A'}`);
         
-        // Add visit information
         if (account.Last_Sales_Visit__c) {
             html.push(`Last Sales Visit: ${this.formatDate(account.Last_Sales_Visit__c)}`);
         }
@@ -272,7 +343,6 @@ export default class SalesMapContainerLwc extends LightningElement {
     }
 
     getMarkerColor(account) {
-        // Main account always gold
         if (account.is_Main_Account__c) return '#FFD700';
 
         switch (this.selectedView) {
@@ -290,8 +360,10 @@ export default class SalesMapContainerLwc extends LightningElement {
                 return this.getTerritoryColor(account.Territory__r?.Name);
             case 'distributionChannel':
                 return this.getDistributionChannelColor(account.Distribution_Channel_Color__c);
+            case 'haendlerstatus':
+                return this.getHaendlerstatusColor(account.H_nderstatus__c);
             default:
-                return '#0070D2'; // Salesforce blue
+                return '#0070D2';
         }
     }
 
@@ -316,9 +388,17 @@ export default class SalesMapContainerLwc extends LightningElement {
         return colorMap[iconValue] || '#0070D2';
     }
 
+    getHaendlerstatusColor(status) {
+        const colorMap = {
+            'Bronze': '#8B4513',
+            'Silber': '#C0C0C0',
+            'Gold': '#FFD700'
+        };
+        return colorMap[status] || '#0070D2';
+    }
+
     getTerritoryColor(territoryName) {
         if (!territoryName) return '#0070D2';
-        // Generate consistent color from territory name
         let hash = 0;
         for (let i = 0; i < territoryName.length; i++) {
             hash = territoryName.charCodeAt(i) + ((hash << 5) - hash);
@@ -371,7 +451,6 @@ export default class SalesMapContainerLwc extends LightningElement {
                 break;
 
             case 'territory':
-                // Build territory legend from current data
                 const territories = [...new Set(this.accounts.map(a => a.Territory__r?.Name).filter(t => t))];
                 this.legendItems = territories.map((territory, index) => ({
                     id: String(index),
@@ -382,34 +461,53 @@ export default class SalesMapContainerLwc extends LightningElement {
                 break;
 
             case 'distributionChannel':
-                // Build distribution channel legend
                 const channels = [...new Set(this.accounts.map(a => a.Distribution_Channel__c).filter(c => c))];
                 this.legendItems = channels.map((channel, index) => ({
                     id: String(index),
                     label: channel,
-                    color: this.getDistributionChannelColor(this.accounts.find(a => a.Distribution_Channel__c === channel)?.Distribution_Channel_Color__c)
+                    color: this.getDistributionChannelColor(
+                        this.accounts.find(a => a.Distribution_Channel__c === channel)?.Distribution_Channel_Color__c
+                    )
                 }));
+                this.showLegend = true;
+                break;
+
+            case 'haendlerstatus':
+                this.legendItems = [
+                    { id: '1', label: 'Bronze', color: '#8B4513' },
+                    { id: '2', label: 'Silber', color: '#C0C0C0' },
+                    { id: '3', label: 'Gold', color: '#FFD700' }
+                ];
                 this.showLegend = true;
                 break;
         }
     }
 
     handleFiltersChange(event) {
+        // Just update the filters, don't search automatically
         this.filters = { ...this.filters, ...event.detail };
+        console.log('Filters updated:', this.filters);
     }
 
-    handleSearch(event) {
+    handleSearch() {
+        console.log('Search button clicked');
         this.performSearch();
         this.closeFilterPanel();
     }
 
-    handleReset(event) {
+    handleReset() {
         this.filters = {};
         this.accounts = [];
         this.displayedAccounts = [];
         this.mapMarkers = [];
         this.selectedView = '--None--';
         this.onlyMainAccounts = false;
+        
+        // Notify filter component to reset
+        const filterComponent = this.template.querySelector('c-sales-map-filters');
+        if (filterComponent) {
+            filterComponent.reset();
+        }
     }
 
     handleViewChange(event) {
@@ -427,9 +525,7 @@ export default class SalesMapContainerLwc extends LightningElement {
     }
 
     fitMapToMarkers() {
-        // Reset zoom to fit all markers
         if (this.mapMarkers.length > 0) {
-            // Calculate bounds
             const lats = this.mapMarkers.map(m => m.location.Latitude);
             const lngs = this.mapMarkers.map(m => m.location.Longitude);
             const centerLat = (Math.max(...lats) + Math.min(...lats)) / 2;
@@ -501,7 +597,6 @@ export default class SalesMapContainerLwc extends LightningElement {
         this.showToast(title, message, 'error');
     }
 
-    // Getters for conditional classes
     get hamburgerClass() {
         return `hamburger hamburger--arrow ${this.filterPanelOpen ? 'is-active' : ''}`;
     }
