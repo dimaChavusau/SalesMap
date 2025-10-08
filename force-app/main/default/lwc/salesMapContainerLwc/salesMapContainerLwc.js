@@ -26,6 +26,7 @@ export default class SalesMapContainerLwc extends LightningElement {
     @track hiddenMarkerGroups = new Set();
     @track hiddenByLegend = new Set(); // Markers hidden by legend toggle
     @track _allMapMarkers = []; // Store ALL markers
+    @track onlyMainAccounts = false;
     
     selectedMarkerValue;
     zoomLevel = 10;
@@ -253,7 +254,7 @@ export default class SalesMapContainerLwc extends LightningElement {
             selectedCampaigns: this.filters.selectedCampaigns || [],
             selectedLegalHierarchies: this.filters.selectedLegalHierarchies || [],
             selectedBusinessHierarchies: this.filters.selectedBusinessHierarchies || [],
-            onlyMainAccounts: false, // Always false now
+            onlyMainAccounts: this.onlyMainAccounts, // RESTORED
             excludeDoNotVisit: this.filters.excludeDoNotVisit || false,
             salesTargetFilterCode: this.filters.salesTargetFilterCode || null,
             selectedDisChannelFilter: this.filters.selectedDisChannelFilter || '',
@@ -334,7 +335,6 @@ export default class SalesMapContainerLwc extends LightningElement {
     }
 
     applyAllFilters() {
-        // Filter based on legend state only
         const fieldMap = {
             'lastSalesVisit': 'Last_Sales_Visit_Icon__c',
             'lastTrainingEvent': 'Last_Training_Event_Icon__c',
@@ -349,18 +349,25 @@ export default class SalesMapContainerLwc extends LightningElement {
         const accountField = fieldMap[this.selectedView];
         
         this.mapMarkers = this._allMapMarkers.filter(marker => {
-            // Check legend filter only
+            // Check legend filter
+            let hiddenByLegend = false;
             if (accountField && this.hiddenByLegend.size > 0) {
                 const fieldValue = this.getNestedFieldValue(marker.account, accountField);
-                return !this.hiddenByLegend.has(fieldValue || 'blue');
+                hiddenByLegend = this.hiddenByLegend.has(fieldValue || 'blue');
             }
-            return true;
+            
+            // Check main account toggle
+            const hiddenByMainToggle = this.onlyMainAccounts && !marker.account.is_Main_Account__c;
+            
+            // Marker is visible only if BOTH filters pass
+            return !hiddenByLegend && !hiddenByMainToggle;
         });
         
         console.log('Applied filters:', {
             totalMarkers: this._allMapMarkers.length,
             visibleMarkers: this.mapMarkers.length,
-            hiddenByLegend: this.hiddenByLegend.size
+            hiddenByLegend: this.hiddenByLegend.size,
+            onlyMainAccounts: this.onlyMainAccounts
         });
         
         // Also update displayed accounts in the table
@@ -560,14 +567,14 @@ export default class SalesMapContainerLwc extends LightningElement {
             }
         });
         
-        // Define all possible legend items with priority
+        // Define all possible legend items with priority - "not set" is now priority 0 (first)
         const legendDefinitions = [
-            { iconValue: 'green', label: '< 30 days', color: '#4BCA81', priority: 0 },
-            { iconValue: 'yellow', label: '30-90 days', color: '#FFB75D', priority: 1 },
-            { iconValue: 'orange', label: '90-180 days', color: '#FF9A3C', priority: 2 },
-            { iconValue: 'red', label: '> 180 days', color: '#FF6361', priority: 3 },
-            { iconValue: 'rose', label: this.selectedView === 'lastSalesVisit' ? 'Visit scheduled' : 'Training scheduled', color: '#FF69B4', priority: 4 },
-            { iconValue: 'blue', label: 'not set', color: '#0070D2', priority: 5 }
+            { iconValue: 'blue', label: 'not set', color: '#0070D2', priority: 0 },
+            { iconValue: 'green', label: '< 30 days', color: '#4BCA81', priority: 1 },
+            { iconValue: 'yellow', label: '30-90 days', color: '#FFB75D', priority: 2 },
+            { iconValue: 'orange', label: '90-180 days', color: '#FF9A3C', priority: 3 },
+            { iconValue: 'red', label: '> 180 days', color: '#FF6361', priority: 4 },
+            { iconValue: 'rose', label: this.selectedView === 'lastSalesVisit' ? 'Visit scheduled' : 'Training scheduled', color: '#FF69B4', priority: 5 }
         ];
         
         // Build legend items only for icons that exist in the data
@@ -585,7 +592,7 @@ export default class SalesMapContainerLwc extends LightningElement {
             }
         });
         
-        // Sort by priority
+        // Sort by priority (ascending - not set will be first)
         this.legendItems = items.sort((a, b) => a.priority - b.priority);
     }
 
@@ -605,13 +612,13 @@ export default class SalesMapContainerLwc extends LightningElement {
         
         console.log('Segmentation icon counts:', Object.fromEntries(iconCounts));
         
-        // Define all possible legend items
+        // Define all possible legend items - "not set" is now priority 0 (first)
         const legendDefinitions = [
-            { iconValue: 'green', label: 'Diamond', color: '#4BCA81', priority: 4 },
-            { iconValue: 'yellow', label: 'Rising Star', color: '#FFB75D', priority: 3 },
-            { iconValue: 'orange', label: 'Heart', color: '#FF9A3C', priority: 2 },
+            { iconValue: 'blue', label: 'not set', color: '#0070D2', priority: 0 },
             { iconValue: 'red', label: 'Leaf', color: '#FF6361', priority: 1 },
-            { iconValue: 'blue', label: 'not set', color: '#0070D2', priority: 0 }
+            { iconValue: 'orange', label: 'Heart', color: '#FF9A3C', priority: 2 },
+            { iconValue: 'yellow', label: 'Rising Star', color: '#FFB75D', priority: 3 },
+            { iconValue: 'green', label: 'Diamond', color: '#4BCA81', priority: 4 }
         ];
         
         // Build legend items only for icons that exist in the data
@@ -629,8 +636,8 @@ export default class SalesMapContainerLwc extends LightningElement {
             }
         });
         
-        // Sort by priority (descending - Diamond at top, not set at bottom)
-        this.legendItems = items.sort((a, b) => b.priority - a.priority);
+        // Sort by priority (ascending - not set will be first)
+        this.legendItems = items.sort((a, b) => a.priority - b.priority);
         
         console.log('Built legend items:', this.legendItems);
     }
@@ -741,12 +748,12 @@ export default class SalesMapContainerLwc extends LightningElement {
         
         console.log('Händlerstatus counts:', Object.fromEntries(statusCounts));
         
-        // Define legend with priority
+        // Define legend with priority - "not set" is now priority 0 (first)
         const legendDefinitions = [
+            { iconValue: 'not set', label: 'not set', color: '#0070D2', priority: 0 },
             { iconValue: 'Bronze', label: 'Bronze', color: '#8B4513', priority: 1 },
             { iconValue: 'Silber', label: 'Silber', color: '#C0C0C0', priority: 2 },
-            { iconValue: 'Gold', label: 'Gold', color: '#FFD700', priority: 3 },
-            { iconValue: 'not set', label: 'not set', color: '#0070D2', priority: 0 }
+            { iconValue: 'Gold', label: 'Gold', color: '#FFD700', priority: 3 }
         ];
         
         // Build legend only for existing statuses
@@ -764,6 +771,7 @@ export default class SalesMapContainerLwc extends LightningElement {
             }
         });
         
+        // Sort by priority (ascending - not set will be first)
         this.legendItems = items.sort((a, b) => a.priority - b.priority);
         
         console.log('Händlerstatus legend items:', this.legendItems);
@@ -788,7 +796,7 @@ export default class SalesMapContainerLwc extends LightningElement {
         this.mapMarkers = [];
         this._allMapMarkers = [];
         this.selectedView = '--None--';
-        // REMOVED: this.onlyMainAccounts = false;
+        this.onlyMainAccounts = false; // RESTORED
         this.hiddenByLegend.clear();
         
         const legendComponent = this.template.querySelector('c-sales-map-legend');
@@ -1131,13 +1139,19 @@ export default class SalesMapContainerLwc extends LightningElement {
         
         const accountField = fieldMap[this.selectedView];
         
-        // Filter accounts based on legend filter only
+        // Filter accounts based on BOTH filters
         const filteredAccounts = this.accounts.filter(account => {
+            // Check legend filter
+            let hiddenByLegend = false;
             if (accountField && this.hiddenByLegend.size > 0) {
                 const fieldValue = this.getNestedFieldValue(account, accountField);
-                return !this.hiddenByLegend.has(fieldValue || 'blue');
+                hiddenByLegend = this.hiddenByLegend.has(fieldValue || 'blue');
             }
-            return true;
+            
+            // Check main account toggle
+            const hiddenByMainToggle = this.onlyMainAccounts && !account.is_Main_Account__c;
+            
+            return !hiddenByLegend && !hiddenByMainToggle;
         });
         
         this.displayedAccounts = filteredAccounts.map(acc => ({
