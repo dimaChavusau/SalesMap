@@ -2,20 +2,33 @@
     <template if:true={showLegend}>
         <div class="legend-container">
             <div class="legend-header" onclick={toggleLegend}>
-                <lightning-icon 
-                    icon-name="utility:list" 
-                    size="x-small">
-                </lightning-icon>
-                <span>Legend</span>
+                <div class="hamburger-icon">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
             </div>
             <template if:true={isExpanded}>
-                <div class="legend-table">
-                    <template for:each={legendItems} for:item="item">
-                        <div key={item.id} class="legend-item">
-                            <span class="legend-color" style={item.style}></span>
-                            <span class="legend-label">{item.label}</span>
-                        </div>
-                    </template>
+                <div class="legend-content">
+                    <table class="legend-table">
+                        <tbody>
+                            <template for:each={legendItems} for:item="item">
+                                <tr key={item.id} 
+                                    class={item.rowClass}
+                                    data-id={item.id}
+                                    data-icon={item.iconValue}
+                                    data-field={item.field}
+                                    onclick={handleLegendItemClick}>
+                                    <td class={item.colorClass}>
+                                        <span class="legend-square" style={item.style}></span>
+                                    </td>
+                                    <td class={item.labelClass}>
+                                        <span>{item.label}</span>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
                 </div>
             </template>
         </div>

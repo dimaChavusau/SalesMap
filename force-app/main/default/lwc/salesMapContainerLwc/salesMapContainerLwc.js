@@ -24,6 +24,10 @@ export default class SalesMapContainerLwc extends LightningElement {
     @track filters = {};
     @track filterPanelOpen = true;
     @track initialFilterData = {};
+    @track hiddenMarkerGroups = new Set();
+    @track hiddenByLegend = new Set(); // Markers hidden by legend toggle
+    @track _allMapMarkers = []; // Store ALL markers
+    @track onlyMainAccounts = false;
     
     selectedMarkerValue;
     zoomLevel = 10;
@@ -202,7 +206,6 @@ export default class SalesMapContainerLwc extends LightningElement {
     }
 
     async performSearch() {
-        // Prevent multiple simultaneous searches
         if (this.isLoading) {
             console.log('Search already in progress, skipping...');
             return;
@@ -214,6 +217,16 @@ export default class SalesMapContainerLwc extends LightningElement {
             console.log('Calling searchAccounts...');
             const results = await searchAccounts(searchParams);
             console.log('Search results:', results?.length);
+            
+            // Clear legend filters on new search
+            this.hiddenByLegend.clear();
+            
+            // Reset legend
+            const legendComponent = this.template.querySelector('c-sales-map-legend');
+            if (legendComponent) {
+                legendComponent.reset();
+            }
+            
             this.processSearchResults(results);
         } catch (error) {
             console.error('Search error:', error);
@@ -225,6 +238,7 @@ export default class SalesMapContainerLwc extends LightningElement {
             this.accounts = [];
             this.displayedAccounts = [];
             this.mapMarkers = [];
+            this._allMapMarkers = [];
         } finally {
             this.isLoading = false;
             console.log('Search complete, loading stopped');
@@ -283,7 +297,8 @@ export default class SalesMapContainerLwc extends LightningElement {
     }
 
     buildMapMarkers() {
-        this.mapMarkers = this.accounts
+        // Store ALL markers (never filter here)
+        this._allMapMarkers = this.accounts
             .filter(acc => acc.BillingLatitude && acc.BillingLongitude)
             .map((acc, index) => {
                 const marker = {
@@ -292,8 +307,6 @@ export default class SalesMapContainerLwc extends LightningElement {
                         Longitude: acc.BillingLongitude
                     },
                     value: acc.Id,
-                    //title: acc.Name,
-                    //description: '',
                     icon: 'standard:account',
                     mapIcon: {
                         path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z',
@@ -301,7 +314,10 @@ export default class SalesMapContainerLwc extends LightningElement {
                         fillOpacity: 1,
                         strokeWeight: 1,
                         scale: 1.5
-                    }
+                    },
+                    account: acc,
+                    hiddenByLegend: false,
+                    hiddenByMainToggle: false
                 };
 
                 // Set map center to first marker
@@ -312,8 +328,85 @@ export default class SalesMapContainerLwc extends LightningElement {
 
                 return marker;
             });
-
+        
+        // Apply both filters
+        this.applyAllFilters();
+        
         this.updateLegend();
+    }
+
+    applyAllFilters() {
+        // Filter based on BOTH legend state AND main account toggle
+        const fieldMap = {
+            'lastSalesVisit': 'Last_Sales_Visit_Icon__c',
+            'lastTrainingEvent': 'Last_Training_Event_Icon__c',
+            'segmentationPOS': 'Sales_Map_POS_Segment_Icon__c',
+            'segmentationOwner': 'Sales_Map_Owner_Segment_Icon__c',
+            'segmentationCG': 'Sales_Map_CG_Segment_Icon__c',
+            'haendlerstatus': 'H_nderstatus__c',
+            'distributionChannel': 'Distribution_Channel_Color__c',
+            'territory': 'Territory__r.Name'
+        };
+        
+        const accountField = fieldMap[this.selectedView];
+        
+        this.mapMarkers = this._allMapMarkers.filter(marker => {
+            // Check legend filter
+            let hiddenByLegend = false;
+            if (accountField && this.hiddenByLegend.size > 0) {
+                const fieldValue = this.getNestedFieldValue(marker.account, accountField);
+                hiddenByLegend = this.hiddenByLegend.has(fieldValue || 'blue');
+            }
+            
+            // Check main account toggle
+            const hiddenByMainToggle = this.onlyMainAccounts && !marker.account.is_Main_Account__c;
+            
+            // Marker is visible only if BOTH filters pass
+            return !hiddenByLegend && !hiddenByMainToggle;
+        });
+        
+        console.log('Applied filters:', {
+            totalMarkers: this._allMapMarkers.length,
+            visibleMarkers: this.mapMarkers.length,
+            hiddenByLegend: this.hiddenByLegend.size,
+            onlyMainAccounts: this.onlyMainAccounts
+        });
+        
+        // Also update displayed accounts in the table
+        this.updateDisplayedAccounts();
+    }
+
+    applyLegendFilters() {
+        // Filter markers based on hidden groups
+        if (this.hiddenMarkerGroups.size === 0) {
+            // Show all markers
+            this.mapMarkers = this._allMapMarkers.map(m => ({...m, hidden: false}));
+        } else {
+            // Filter based on hidden groups
+            const fieldMap = {
+                'lastSalesVisit': 'Last_Sales_Visit_Icon__c',
+                'lastTrainingEvent': 'Last_Training_Event_Icon__c',
+                'segmentationPOS': 'Sales_Map_POS_Segment_Icon__c',
+                'segmentationOwner': 'Sales_Map_Owner_Segment_Icon__c',
+                'segmentationCG': 'Sales_Map_CG_Segment_Icon__c',
+                'haendlerstatus': 'H_nderstatus__c',
+                'distributionChannel': 'Distribution_Channel_Color__c',
+                'territory': 'Territory__r.Name'
+            };
+            
+            const accountField = fieldMap[this.selectedView];
+            
+            this.mapMarkers = this._allMapMarkers
+                .filter(marker => {
+                    if (!accountField) return true;
+                    
+                    const fieldValue = this.getNestedFieldValue(marker.account, accountField);
+                    const isHidden = this.hiddenMarkerGroups.has(fieldValue);
+                    
+                    return !isHidden;
+                })
+                .map(m => ({...m, hidden: false}));
+        }
     }
 
     buildMarkerDescription(account) {
@@ -415,62 +508,274 @@ export default class SalesMapContainerLwc extends LightningElement {
         this.showLegend = false;
         this.legendItems = [];
 
+        if (!this.accounts || this.accounts.length === 0) {
+            return;
+        }
+
+        const fieldMap = {
+            'lastSalesVisit': 'Last_Sales_Visit_Icon__c',
+            'lastTrainingEvent': 'Last_Training_Event_Icon__c',
+            'segmentationPOS': 'Sales_Map_POS_Segment_Icon__c',
+            'segmentationOwner': 'Sales_Map_Owner_Segment_Icon__c',
+            'segmentationCG': 'Sales_Map_CG_Segment_Icon__c',
+            'haendlerstatus': 'H_nderstatus__c',
+            'distributionChannel': 'Distribution_Channel_Color__c',
+            'territory': 'Territory__r.Name'
+        };
+
+        const iconField = fieldMap[this.selectedView];
+        if (!iconField) {
+            return;
+        }
+
         switch (this.selectedView) {
             case 'lastSalesVisit':
             case 'lastTrainingEvent':
-                this.legendItems = [
-                    { id: '1', label: '< 30 days', color: '#4BCA81' },
-                    { id: '2', label: '30-90 days', color: '#FFB75D' },
-                    { id: '3', label: '90-180 days', color: '#FF9A3C' },
-                    { id: '4', label: '> 180 days', color: '#FF6361' },
-                    { id: '5', label: 'Visit scheduled', color: '#FF69B4' }
-                ];
-                this.showLegend = true;
+                this.buildVisitLegend(iconField);
                 break;
             
             case 'segmentationPOS':
             case 'segmentationOwner':
             case 'segmentationCG':
-                this.legendItems = [
-                    { id: '1', label: 'Diamond', color: '#4BCA81' },
-                    { id: '2', label: 'Rising Star', color: '#FFB75D' },
-                    { id: '3', label: 'Heart', color: '#FF9A3C' },
-                    { id: '4', label: 'Leaf', color: '#FF6361' }
-                ];
-                this.showLegend = true;
+                this.buildSegmentationLegend(iconField);
                 break;
 
             case 'territory':
-                const territories = [...new Set(this.accounts.map(a => a.Territory__r?.Name).filter(t => t))];
-                this.legendItems = territories.map((territory, index) => ({
-                    id: String(index),
-                    label: territory,
-                    color: this.getTerritoryColor(territory)
-                }));
-                this.showLegend = true;
+                this.buildTerritoryLegend();
                 break;
 
             case 'distributionChannel':
-                const channels = [...new Set(this.accounts.map(a => a.Distribution_Channel__c).filter(c => c))];
-                this.legendItems = channels.map((channel, index) => ({
-                    id: String(index),
-                    label: channel,
-                    color: this.getDistributionChannelColor(
-                        this.accounts.find(a => a.Distribution_Channel__c === channel)?.Distribution_Channel_Color__c
-                    )
-                }));
-                this.showLegend = true;
+                this.buildDistributionChannelLegend();
                 break;
 
             case 'haendlerstatus':
-                this.legendItems = [
-                    { id: '1', label: 'Bronze', color: '#8B4513' },
-                    { id: '2', label: 'Silber', color: '#C0C0C0' },
-                    { id: '3', label: 'Gold', color: '#FFD700' }
-                ];
-                this.showLegend = true;
+                this.buildHaendlerstatusLegend();
                 break;
         }
+
+        this.showLegend = this.legendItems.length > 0;
+    }
+
+    buildVisitLegend(iconField) {
+        // Collect all unique icon values from actual data
+        const iconCounts = new Map();
+        
+        this.accounts.forEach(account => {
+            const iconValue = this.getNestedFieldValue(account, iconField);
+            if (iconValue) {
+                iconCounts.set(iconValue, (iconCounts.get(iconValue) || 0) + 1);
+            } else {
+                iconCounts.set('blue', (iconCounts.get('blue') || 0) + 1);
+            }
+        });
+        
+        // Define all possible legend items with priority
+        const legendDefinitions = [
+            { iconValue: 'green', label: '< 30 days', color: '#4BCA81', priority: 0 },
+            { iconValue: 'yellow', label: '30-90 days', color: '#FFB75D', priority: 1 },
+            { iconValue: 'orange', label: '90-180 days', color: '#FF9A3C', priority: 2 },
+            { iconValue: 'red', label: '> 180 days', color: '#FF6361', priority: 3 },
+            { iconValue: 'rose', label: this.selectedView === 'lastSalesVisit' ? 'Visit scheduled' : 'Training scheduled', color: '#FF69B4', priority: 4 },
+            { iconValue: 'blue', label: 'not set', color: '#0070D2', priority: 5 }
+        ];
+        
+        // Build legend items only for icons that exist in the data
+        const items = [];
+        legendDefinitions.forEach(def => {
+            if (iconCounts.has(def.iconValue)) {
+                items.push({
+                    id: def.priority.toString(),
+                    label: def.label,
+                    color: def.color,
+                    iconValue: def.iconValue,
+                    priority: def.priority,
+                    count: iconCounts.get(def.iconValue)
+                });
+            }
+        });
+        
+        // Sort by priority
+        this.legendItems = items.sort((a, b) => a.priority - b.priority);
+    }
+
+    buildSegmentationLegend(iconField) {
+        // Collect all unique icon values from actual data
+        const iconCounts = new Map();
+        
+        this.accounts.forEach(account => {
+            const iconValue = this.getNestedFieldValue(account, iconField);
+            if (iconValue) {
+                iconCounts.set(iconValue, (iconCounts.get(iconValue) || 0) + 1);
+            } else {
+                // Accounts without segmentation should be counted as 'blue'
+                iconCounts.set('blue', (iconCounts.get('blue') || 0) + 1);
+            }
+        });
+        
+        console.log('Segmentation icon counts:', Object.fromEntries(iconCounts));
+        
+        // Define all possible legend items
+        const legendDefinitions = [
+            { iconValue: 'green', label: 'Diamond', color: '#4BCA81', priority: 4 },
+            { iconValue: 'yellow', label: 'Rising Star', color: '#FFB75D', priority: 3 },
+            { iconValue: 'orange', label: 'Heart', color: '#FF9A3C', priority: 2 },
+            { iconValue: 'red', label: 'Leaf', color: '#FF6361', priority: 1 },
+            { iconValue: 'blue', label: 'not set', color: '#0070D2', priority: 0 }
+        ];
+        
+        // Build legend items only for icons that exist in the data
+        const items = [];
+        legendDefinitions.forEach(def => {
+            if (iconCounts.has(def.iconValue)) {
+                items.push({
+                    id: def.priority.toString(),
+                    label: def.label,
+                    color: def.color,
+                    iconValue: def.iconValue,
+                    priority: def.priority,
+                    count: iconCounts.get(def.iconValue)
+                });
+            }
+        });
+        
+        // Sort by priority (descending - Diamond at top, not set at bottom)
+        this.legendItems = items.sort((a, b) => b.priority - a.priority);
+        
+        console.log('Built legend items:', this.legendItems);
+    }
+
+    buildTerritoryLegend() {
+        const territoryMap = new Map();
+        
+        this.accounts.forEach(account => {
+            const territory = account.Territory__r?.Name;
+            if (territory) {
+                if (!territoryMap.has(territory)) {
+                    territoryMap.set(territory, {
+                        label: territory,
+                        color: this.getTerritoryColor(territory),
+                        iconValue: territory,
+                        count: 0
+                    });
+                }
+                territoryMap.get(territory).count++;
+            } else {
+                // Handle accounts without territory
+                if (!territoryMap.has('not set')) {
+                    territoryMap.set('not set', {
+                        label: 'not set',
+                        color: '#0070D2',
+                        iconValue: 'not set',
+                        count: 0
+                    });
+                }
+                territoryMap.get('not set').count++;
+            }
+        });
+        
+        // Sort alphabetically
+        const sortedTerritories = Array.from(territoryMap.entries())
+            .sort((a, b) => a[0].localeCompare(b[0]));
+        
+        this.legendItems = sortedTerritories.map(([territory, data], index) => ({
+            id: index.toString(),
+            label: data.label,
+            color: data.color,
+            iconValue: data.iconValue,
+            count: data.count
+        }));
+        
+        console.log('Territory legend items:', this.legendItems);
+    }
+
+    buildDistributionChannelLegend() {
+        const channelMap = new Map();
+        
+        this.accounts.forEach(account => {
+            const channel = account.Distribution_Channel__c;
+            const colorValue = account.Distribution_Channel_Color__c;
+            
+            if (channel) {
+                if (!channelMap.has(channel)) {
+                    const color = this.getDistributionChannelColor(colorValue);
+                    channelMap.set(channel, {
+                        label: channel,
+                        color: color,
+                        iconValue: colorValue || 'blue',
+                        count: 0
+                    });
+                }
+                channelMap.get(channel).count++;
+            } else {
+                // Handle accounts without distribution channel
+                if (!channelMap.has('not set')) {
+                    channelMap.set('not set', {
+                        label: 'not set',
+                        color: '#0070D2',
+                        iconValue: 'blue',
+                        count: 0
+                    });
+                }
+                channelMap.get('not set').count++;
+            }
+        });
+        
+        // Sort alphabetically
+        const sortedChannels = Array.from(channelMap.entries())
+            .sort((a, b) => a[0].localeCompare(b[0]));
+        
+        this.legendItems = sortedChannels.map(([channel, data], index) => ({
+            id: index.toString(),
+            label: data.label,
+            color: data.color,
+            iconValue: data.iconValue,
+            count: data.count
+        }));
+        
+        console.log('Distribution channel legend items:', this.legendItems);
+    }
+
+    buildHaendlerstatusLegend() {
+        const statusCounts = new Map();
+        
+        // First, collect all unique status values
+        this.accounts.forEach(account => {
+            const status = account.H_nderstatus__c;
+            if (status) {
+                statusCounts.set(status, (statusCounts.get(status) || 0) + 1);
+            } else {
+                statusCounts.set('not set', (statusCounts.get('not set') || 0) + 1);
+            }
+        });
+        
+        console.log('Händlerstatus counts:', Object.fromEntries(statusCounts));
+        
+        // Define legend with priority
+        const legendDefinitions = [
+            { iconValue: 'Bronze', label: 'Bronze', color: '#8B4513', priority: 1 },
+            { iconValue: 'Silber', label: 'Silber', color: '#C0C0C0', priority: 2 },
+            { iconValue: 'Gold', label: 'Gold', color: '#FFD700', priority: 3 },
+            { iconValue: 'not set', label: 'not set', color: '#0070D2', priority: 0 }
+        ];
+        
+        // Build legend only for existing statuses
+        const items = [];
+        legendDefinitions.forEach(def => {
+            if (statusCounts.has(def.iconValue)) {
+                items.push({
+                    id: def.priority.toString(),
+                    label: def.label,
+                    color: def.color,
+                    iconValue: def.iconValue,
+                    priority: def.priority,
+                    count: statusCounts.get(def.iconValue)
+                });
+            }
+        });
+        
+        this.legendItems = items.sort((a, b) => a.priority - b.priority);
+        
+        console.log('Händlerstatus legend items:', this.legendItems);
     }
 
     handleFiltersChange(event) {
@@ -490,8 +795,16 @@ export default class SalesMapContainerLwc extends LightningElement {
         this.accounts = [];
         this.displayedAccounts = [];
         this.mapMarkers = [];
+        this._allMapMarkers = [];
         this.selectedView = '--None--';
         this.onlyMainAccounts = false;
+        this.hiddenByLegend.clear(); // Clear legend filters
+        
+        // Reset legend
+        const legendComponent = this.template.querySelector('c-sales-map-legend');
+        if (legendComponent) {
+            legendComponent.reset();
+        }
         
         // Notify filter component to reset
         const filterComponent = this.template.querySelector('c-sales-map-filters');
@@ -502,6 +815,17 @@ export default class SalesMapContainerLwc extends LightningElement {
 
     handleViewChange(event) {
         this.selectedView = event.detail.value;
+        
+        // Clear legend filters when changing view
+        this.hiddenByLegend.clear();
+        
+        // Reset legend component
+        const legendComponent = this.template.querySelector('c-sales-map-legend');
+        if (legendComponent) {
+            legendComponent.reset();
+        }
+        
+        // Rebuild markers with new colors
         this.buildMapMarkers();
     }
 
@@ -653,7 +977,11 @@ export default class SalesMapContainerLwc extends LightningElement {
 
     handleMainAccountToggle(event) {
         this.onlyMainAccounts = event.target.checked;
-        this.performSearch();
+        
+        console.log('Main account toggle:', this.onlyMainAccounts);
+        
+        // Reapply BOTH filters
+        this.applyAllFilters();
     }
 
     fitMapToMarkers() {
@@ -727,6 +1055,126 @@ export default class SalesMapContainerLwc extends LightningElement {
     showError(title, error) {
         const message = error?.body?.message || error?.message || 'Unknown error';
         this.showToast(title, message, 'error');
+    }
+
+    updateLegend() {
+        console.log('updateLegend called for view:', this.selectedView);
+        console.log('Number of accounts:', this.accounts?.length);
+        
+        this.showLegend = false;
+        this.legendItems = [];
+
+        if (!this.accounts || this.accounts.length === 0) {
+            console.log('No accounts to build legend');
+            return;
+        }
+
+        const fieldMap = {
+            'lastSalesVisit': 'Last_Sales_Visit_Icon__c',
+            'lastTrainingEvent': 'Last_Training_Event_Icon__c',
+            'segmentationPOS': 'Sales_Map_POS_Segment_Icon__c',
+            'segmentationOwner': 'Sales_Map_Owner_Segment_Icon__c',
+            'segmentationCG': 'Sales_Map_CG_Segment_Icon__c',
+            'haendlerstatus': 'H_nderstatus__c',
+            'distributionChannel': 'Distribution_Channel_Color__c',
+            'territory': 'Territory__r.Name'
+        };
+
+        const iconField = fieldMap[this.selectedView];
+        console.log('Icon field:', iconField);
+        
+        if (!iconField) {
+            console.log('No icon field for view:', this.selectedView);
+            return;
+        }
+
+        switch (this.selectedView) {
+            case 'lastSalesVisit':
+            case 'lastTrainingEvent':
+                this.buildVisitLegend(iconField);
+                break;
+            
+            case 'segmentationPOS':
+            case 'segmentationOwner':
+            case 'segmentationCG':
+                this.buildSegmentationLegend(iconField);
+                break;
+
+            case 'territory':
+                this.buildTerritoryLegend();
+                break;
+
+            case 'distributionChannel':
+                this.buildDistributionChannelLegend();
+                break;
+
+            case 'haendlerstatus':
+                this.buildHaendlerstatusLegend();
+                break;
+        }
+
+        this.showLegend = this.legendItems.length > 0;
+        console.log('Legend items built:', this.legendItems.length);
+    }
+
+    handleLegendItemToggle(event) {
+        const { iconValue, field, crossed } = event.detail;
+        
+        console.log('Legend toggle:', { iconValue, field, crossed });
+        
+        // Update the hidden marker groups set
+        if (crossed) {
+            // Add to hidden set
+            this.hiddenByLegend.add(iconValue);
+        } else {
+            // Remove from hidden set
+            this.hiddenByLegend.delete(iconValue);
+        }
+        
+        console.log('Hidden by legend:', Array.from(this.hiddenByLegend));
+        
+        // Reapply BOTH filters
+        this.applyAllFilters();
+    }
+
+    updateDisplayedAccounts() {
+        const fieldMap = {
+            'lastSalesVisit': 'Last_Sales_Visit_Icon__c',
+            'lastTrainingEvent': 'Last_Training_Event_Icon__c',
+            'segmentationPOS': 'Sales_Map_POS_Segment_Icon__c',
+            'segmentationOwner': 'Sales_Map_Owner_Segment_Icon__c',
+            'segmentationCG': 'Sales_Map_CG_Segment_Icon__c',
+            'haendlerstatus': 'H_nderstatus__c',
+            'distributionChannel': 'Distribution_Channel_Color__c',
+            'territory': 'Territory__r.Name'
+        };
+        
+        const accountField = fieldMap[this.selectedView];
+        
+        // Filter accounts based on BOTH filters
+        const filteredAccounts = this.accounts.filter(account => {
+            // Check legend filter
+            let hiddenByLegend = false;
+            if (accountField && this.hiddenByLegend.size > 0) {
+                const fieldValue = this.getNestedFieldValue(account, accountField);
+                hiddenByLegend = this.hiddenByLegend.has(fieldValue || 'blue');
+            }
+            
+            // Check main account toggle
+            const hiddenByMainToggle = this.onlyMainAccounts && !account.is_Main_Account__c;
+            
+            return !hiddenByLegend && !hiddenByMainToggle;
+        });
+        
+        this.displayedAccounts = filteredAccounts.map(acc => ({
+            ...acc,
+            FormattedAddress: this.formatAddress(acc),
+            TerritoryName: acc.Territory__r?.Name || ''
+        }));
+    }
+
+    getNestedFieldValue(obj, path) {
+        return path.split('.').reduce((current, prop) => current?.[prop], obj);
     }
 
     get hamburgerClass() {
