@@ -1,4 +1,4 @@
-import { LightningElement, track, wire } from 'lwc';
+import { LightningElement, api, track, wire } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { CurrentPageReference } from 'lightning/navigation';
 import getUser from '@salesforce/apex/SalesMapController.getUser';
@@ -77,6 +77,7 @@ const LEGEND_DEFINITIONS = {
 };
 
 export default class SalesMapContainerLwc extends LightningElement {
+    @api pageReference;
     @track accounts = [];
     @track displayedAccounts = [];
     @track mapMarkers = [];
