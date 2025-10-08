@@ -295,10 +295,18 @@ export default class SalesMapContainerLwc extends LightningElement {
                 if (coordData.results?.[0]) {
                     params.lat = coordData.results[0].geometry.location.lat;
                     params.lng = coordData.results[0].geometry.location.lng;
+                    
+                    // Store searched location for map centering
+                    this.searchedLocation = {
+                        Latitude: params.lat,
+                        Longitude: params.lng
+                    };
                 }
             } catch (error) {
                 console.error('Error getting coordinates:', error);
             }
+        } else {
+            this.searchedLocation = null;
         }
 
         return params;
@@ -311,13 +319,47 @@ export default class SalesMapContainerLwc extends LightningElement {
             FormattedAddress: this.formatAddress(acc),
             TerritoryName: acc.Territory__r?.Name || ''
         }));
+        
+        // Build markers (this will call fitMapToMarkers internally)
         this.buildMapMarkers();
+        
+        // SPECIAL CASE: If user searched by location with radius
+        // Center on searched location instead of markers
+        if (this.searchedLocation && this.filters.radius) {
+            this.mapCenter = { location: this.searchedLocation };
+            
+            // Calculate zoom based on radius to show search area
+            const radius = parseFloat(this.filters.radius);
+            const unit = this.filters.unit || 'km';
+            const radiusInKm = unit === 'mi' ? radius * 1.60934 : radius;
+            
+            // Approximate degrees per km at equator: ~0.009
+            // We want the radius to fit comfortably in viewport
+            const degreesRadius = (radiusInKm * 0.009) * 2; // diameter
+            
+            // Calculate zoom for this coverage
+            if (degreesRadius >= 180) this.zoomLevel = 1;
+            else if (degreesRadius >= 90) this.zoomLevel = 2;
+            else if (degreesRadius >= 45) this.zoomLevel = 3;
+            else if (degreesRadius >= 22.5) this.zoomLevel = 4;
+            else if (degreesRadius >= 11.25) this.zoomLevel = 5;
+            else if (degreesRadius >= 5.625) this.zoomLevel = 6;
+            else if (degreesRadius >= 2.813) this.zoomLevel = 7;
+            else if (degreesRadius >= 1.406) this.zoomLevel = 8;
+            else if (degreesRadius >= 0.703) this.zoomLevel = 9;
+            else if (degreesRadius >= 0.352) this.zoomLevel = 10;
+            else if (degreesRadius >= 0.176) this.zoomLevel = 11;
+            else if (degreesRadius >= 0.088) this.zoomLevel = 12;
+            else if (degreesRadius >= 0.044) this.zoomLevel = 13;
+            else this.zoomLevel = 14;
+        }
+        // Otherwise, fitMapToMarkers was already called in buildMapMarkers
     }
 
     buildMapMarkers() {
         this._allMapMarkers = this.accounts
             .filter(acc => acc.BillingLatitude && acc.BillingLongitude)
-            .map((acc, index) => {
+            .map((acc) => {
                 const marker = {
                     location: {
                         Latitude: acc.BillingLatitude,
@@ -334,16 +376,16 @@ export default class SalesMapContainerLwc extends LightningElement {
                     },
                     account: acc
                 };
-
-                if (index === 0) {
-                    this.mapCenter = { location: marker.location };
-                    this.zoomLevel = 12;
-                }
-
                 return marker;
             });
         
+        // Apply filters first to get visible markers
         this.applyFilters();
+        
+        // Fit map to show all visible markers
+        this.fitMapToMarkers(this.mapMarkers);
+        
+        // Update legend
         this.updateLegend();
     }
 
@@ -395,6 +437,11 @@ export default class SalesMapContainerLwc extends LightningElement {
             }
             return true;
         });
+        
+        // After filtering, adjust map to show remaining markers
+        if (this.mapMarkers.length > 0) {
+            this.fitMapToMarkers(this.mapMarkers);
+        }
         
         this.updateDisplayedAccounts();
     }
@@ -687,15 +734,8 @@ export default class SalesMapContainerLwc extends LightningElement {
 
     fitMapToMarkers() {
         if (this.mapMarkers.length > 0) {
-            const lats = this.mapMarkers.map(m => m.location.Latitude);
-            const lngs = this.mapMarkers.map(m => m.location.Longitude);
-            const centerLat = (Math.max(...lats) + Math.min(...lats)) / 2;
-            const centerLng = (Math.max(...lngs) + Math.min(...lngs)) / 2;
-            
-            this.mapCenter = {
-                location: { Latitude: centerLat, Longitude: centerLng }
-            };
-            this.zoomLevel = 10;
+            this.mapCenter = this.calculateCenter(this.mapMarkers);
+            this.zoomLevel = this.calculateZoomLevel(this.mapMarkers);
         }
     }
 
@@ -728,6 +768,153 @@ export default class SalesMapContainerLwc extends LightningElement {
     showError(title, error) {
         const message = error?.body?.message || error?.message || 'Unknown error';
         this.showToast(title, message, 'error');
+    }
+
+    /**
+ * Calculate appropriate zoom level based on marker spread
+ * Mimics Google Maps fitBounds behavior
+ */
+    calculateZoomLevel(markers) {
+        if (markers.length === 0) return 10;
+        if (markers.length === 1) return 15;
+        
+        const lats = markers.map(m => m.location.Latitude);
+        const lngs = markers.map(m => m.location.Longitude);
+        
+        const latSpread = Math.max(...lats) - Math.min(...lats);
+        const lngSpread = Math.max(...lngs) - Math.min(...lngs);
+        const maxSpread = Math.max(latSpread, lngSpread);
+        
+        // Zoom level calculation (approximate Google Maps fitBounds)
+        if (maxSpread >= 10) return 5;
+        if (maxSpread >= 5) return 6;
+        if (maxSpread >= 2) return 7;
+        if (maxSpread >= 1) return 8;
+        if (maxSpread >= 0.5) return 9;
+        if (maxSpread >= 0.25) return 10;
+        if (maxSpread >= 0.125) return 11;
+        if (maxSpread >= 0.06) return 12;
+        if (maxSpread >= 0.03) return 13;
+        if (maxSpread >= 0.015) return 14;
+        return 15;
+    }
+
+    /**
+     * Calculate center point of all markers
+     */
+    calculateCenter(markers) {
+        if (markers.length === 0) return this.mapCenter;
+        
+        const lats = markers.map(m => m.location.Latitude);
+        const lngs = markers.map(m => m.location.Longitude);
+        
+        return {
+            location: {
+                Latitude: (Math.max(...lats) + Math.min(...lats)) / 2,
+                Longitude: (Math.max(...lngs) + Math.min(...lngs)) / 2
+            }
+        };
+    }
+
+    /**
+     * Calculate bounds that contain all markers
+     * Returns {north, south, east, west}
+     */
+    calculateBounds(markers) {
+        if (!markers || markers.length === 0) {
+            return null;
+        }
+        
+        const lats = markers.map(m => m.location.Latitude);
+        const lngs = markers.map(m => m.location.Longitude);
+        
+        return {
+            north: Math.max(...lats),
+            south: Math.min(...lats),
+            east: Math.max(...lngs),
+            west: Math.min(...lngs)
+        };
+    }
+
+    /**
+     * Calculate center from bounds
+     */
+    getCenterFromBounds(bounds) {
+        return {
+            location: {
+                Latitude: (bounds.north + bounds.south) / 2,
+                Longitude: (bounds.east + bounds.west) / 2
+            }
+        };
+    }
+
+    /**
+     * Calculate zoom level to fit bounds
+     * Based on viewport size and marker spread
+     */
+    getZoomForBounds(bounds) {
+        if (!bounds) return 10;
+        
+        const latDiff = bounds.north - bounds.south;
+        const lngDiff = bounds.east - bounds.west;
+        
+        // Use the larger of the two differences
+        const maxDiff = Math.max(latDiff, lngDiff);
+        
+        // These values are approximations for a standard map viewport
+        // Adjust based on typical viewport size (roughly 1000px)
+        if (maxDiff >= 180) return 1;
+        if (maxDiff >= 90) return 2;
+        if (maxDiff >= 45) return 3;
+        if (maxDiff >= 22.5) return 4;
+        if (maxDiff >= 11.25) return 5;
+        if (maxDiff >= 5.625) return 6;
+        if (maxDiff >= 2.813) return 7;
+        if (maxDiff >= 1.406) return 8;
+        if (maxDiff >= 0.703) return 9;
+        if (maxDiff >= 0.352) return 10;
+        if (maxDiff >= 0.176) return 11;
+        if (maxDiff >= 0.088) return 12;
+        if (maxDiff >= 0.044) return 13;
+        if (maxDiff >= 0.022) return 14;
+        if (maxDiff >= 0.011) return 15;
+        if (maxDiff >= 0.005) return 16;
+        if (maxDiff >= 0.0025) return 17;
+        if (maxDiff >= 0.00125) return 18;
+        return 19;
+    }
+
+    handleFitMapToMarkers() {
+        if (this.mapMarkers && this.mapMarkers.length > 0) {
+            this.fitMapToMarkers(this.mapMarkers);
+        }
+    }
+
+    /**
+     * Fit map to show all markers (mimics Google Maps fitBounds)
+     */
+    fitMapToMarkers(markers) {
+        if (!markers || markers.length === 0) {
+            return;
+        }
+        
+        // Single marker - center on it with high zoom
+        if (markers.length === 1) {
+            this.mapCenter = { location: markers[0].location };
+            this.zoomLevel = 15;
+            return;
+        }
+        
+        // Multiple markers - calculate bounds
+        const bounds = this.calculateBounds(markers);
+        this.mapCenter = this.getCenterFromBounds(bounds);
+        this.zoomLevel = this.getZoomForBounds(bounds);
+        
+        // Add small padding to zoom out slightly (so markers aren't on edge)
+        // Reduce zoom by 1 to give some breathing room
+        if (this.zoomLevel > 1) {
+            this.zoomLevel = this.zoomLevel - 1;
+        }
     }
 
     // Getters
