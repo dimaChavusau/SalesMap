@@ -20,14 +20,12 @@ export default class SalesMapContainerLwc extends LightningElement {
     @track selectedView = '--None--';
     @track showLegend = false;
     @track legendItems = [];
-    @track onlyMainAccounts = false;
     @track filters = {};
     @track filterPanelOpen = true;
     @track initialFilterData = {};
     @track hiddenMarkerGroups = new Set();
     @track hiddenByLegend = new Set(); // Markers hidden by legend toggle
     @track _allMapMarkers = []; // Store ALL markers
-    @track onlyMainAccounts = false;
     
     selectedMarkerValue;
     zoomLevel = 10;
@@ -255,7 +253,7 @@ export default class SalesMapContainerLwc extends LightningElement {
             selectedCampaigns: this.filters.selectedCampaigns || [],
             selectedLegalHierarchies: this.filters.selectedLegalHierarchies || [],
             selectedBusinessHierarchies: this.filters.selectedBusinessHierarchies || [],
-            onlyMainAccounts: this.onlyMainAccounts,
+            onlyMainAccounts: false, // Always false now
             excludeDoNotVisit: this.filters.excludeDoNotVisit || false,
             salesTargetFilterCode: this.filters.salesTargetFilterCode || null,
             selectedDisChannelFilter: this.filters.selectedDisChannelFilter || '',
@@ -310,14 +308,14 @@ export default class SalesMapContainerLwc extends LightningElement {
                     icon: 'standard:account',
                     mapIcon: {
                         path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z',
-                        fillColor: this.getMarkerColor(acc),
+                        fillColor: this.getMarkerColor(acc), // This now uses only legend colors
                         fillOpacity: 1,
                         strokeWeight: 1,
                         scale: 1.5
                     },
                     account: acc,
                     hiddenByLegend: false,
-                    hiddenByMainToggle: false
+                    hiddenByMainToggle: false // This is now obsolete but keeping for compatibility
                 };
 
                 // Set map center to first marker
@@ -329,14 +327,14 @@ export default class SalesMapContainerLwc extends LightningElement {
                 return marker;
             });
         
-        // Apply both filters
+        // Apply filters
         this.applyAllFilters();
         
         this.updateLegend();
     }
 
     applyAllFilters() {
-        // Filter based on BOTH legend state AND main account toggle
+        // Filter based on legend state only
         const fieldMap = {
             'lastSalesVisit': 'Last_Sales_Visit_Icon__c',
             'lastTrainingEvent': 'Last_Training_Event_Icon__c',
@@ -351,25 +349,18 @@ export default class SalesMapContainerLwc extends LightningElement {
         const accountField = fieldMap[this.selectedView];
         
         this.mapMarkers = this._allMapMarkers.filter(marker => {
-            // Check legend filter
-            let hiddenByLegend = false;
+            // Check legend filter only
             if (accountField && this.hiddenByLegend.size > 0) {
                 const fieldValue = this.getNestedFieldValue(marker.account, accountField);
-                hiddenByLegend = this.hiddenByLegend.has(fieldValue || 'blue');
+                return !this.hiddenByLegend.has(fieldValue || 'blue');
             }
-            
-            // Check main account toggle
-            const hiddenByMainToggle = this.onlyMainAccounts && !marker.account.is_Main_Account__c;
-            
-            // Marker is visible only if BOTH filters pass
-            return !hiddenByLegend && !hiddenByMainToggle;
+            return true;
         });
         
         console.log('Applied filters:', {
             totalMarkers: this._allMapMarkers.length,
             visibleMarkers: this.mapMarkers.length,
-            hiddenByLegend: this.hiddenByLegend.size,
-            onlyMainAccounts: this.onlyMainAccounts
+            hiddenByLegend: this.hiddenByLegend.size
         });
         
         // Also update displayed accounts in the table
@@ -426,7 +417,7 @@ export default class SalesMapContainerLwc extends LightningElement {
     }
 
     getMarkerColor(account) {
-        if (account.is_Main_Account__c) return '#FFD700';
+        // REMOVED: if (account.is_Main_Account__c) return '#FFD700';
 
         switch (this.selectedView) {
             case 'lastSalesVisit':
@@ -446,7 +437,7 @@ export default class SalesMapContainerLwc extends LightningElement {
             case 'haendlerstatus':
                 return this.getHaendlerstatusColor(account.H_nderstatus__c);
             default:
-                return '#0070D2';
+                return '#0070D2'; // Default blue
         }
     }
 
@@ -458,7 +449,7 @@ export default class SalesMapContainerLwc extends LightningElement {
             'red': '#FF6361',
             'rose': '#FF69B4'
         };
-        return colorMap[iconValue] || '#0070D2';
+        return colorMap[iconValue] || '#0070D2'; // Default blue if not set
     }
 
     getSegmentationColor(iconValue) {
@@ -468,7 +459,7 @@ export default class SalesMapContainerLwc extends LightningElement {
             'orange': '#FF9A3C',
             'red': '#FF6361'
         };
-        return colorMap[iconValue] || '#0070D2';
+        return colorMap[iconValue] || '#0070D2'; // Default blue if not set
     }
 
     getHaendlerstatusColor(status) {
@@ -477,11 +468,11 @@ export default class SalesMapContainerLwc extends LightningElement {
             'Silber': '#C0C0C0',
             'Gold': '#FFD700'
         };
-        return colorMap[status] || '#0070D2';
+        return colorMap[status] || '#0070D2'; // Default blue if not set
     }
 
     getTerritoryColor(territoryName) {
-        if (!territoryName) return '#0070D2';
+        if (!territoryName) return '#0070D2'; // Default blue
         let hash = 0;
         for (let i = 0; i < territoryName.length; i++) {
             hash = territoryName.charCodeAt(i) + ((hash << 5) - hash);
@@ -501,7 +492,7 @@ export default class SalesMapContainerLwc extends LightningElement {
             'purple': '#9B59B6',
             'pink': '#FF69B4'
         };
-        return colorMap[colorValue] || '#0070D2';
+        return colorMap[colorValue] || '#0070D2'; // Default blue if not set
     }
 
     updateLegend() {
@@ -797,16 +788,14 @@ export default class SalesMapContainerLwc extends LightningElement {
         this.mapMarkers = [];
         this._allMapMarkers = [];
         this.selectedView = '--None--';
-        this.onlyMainAccounts = false;
-        this.hiddenByLegend.clear(); // Clear legend filters
+        // REMOVED: this.onlyMainAccounts = false;
+        this.hiddenByLegend.clear();
         
-        // Reset legend
         const legendComponent = this.template.querySelector('c-sales-map-legend');
         if (legendComponent) {
             legendComponent.reset();
         }
         
-        // Notify filter component to reset
         const filterComponent = this.template.querySelector('c-sales-map-filters');
         if (filterComponent) {
             filterComponent.reset();
@@ -973,15 +962,6 @@ export default class SalesMapContainerLwc extends LightningElement {
         const accountId = event.detail.accountId;
         this.showInfoPanel = false;
         this.openEventModal(accountId);
-    }
-
-    handleMainAccountToggle(event) {
-        this.onlyMainAccounts = event.target.checked;
-        
-        console.log('Main account toggle:', this.onlyMainAccounts);
-        
-        // Reapply BOTH filters
-        this.applyAllFilters();
     }
 
     fitMapToMarkers() {
@@ -1151,19 +1131,13 @@ export default class SalesMapContainerLwc extends LightningElement {
         
         const accountField = fieldMap[this.selectedView];
         
-        // Filter accounts based on BOTH filters
+        // Filter accounts based on legend filter only
         const filteredAccounts = this.accounts.filter(account => {
-            // Check legend filter
-            let hiddenByLegend = false;
             if (accountField && this.hiddenByLegend.size > 0) {
                 const fieldValue = this.getNestedFieldValue(account, accountField);
-                hiddenByLegend = this.hiddenByLegend.has(fieldValue || 'blue');
+                return !this.hiddenByLegend.has(fieldValue || 'blue');
             }
-            
-            // Check main account toggle
-            const hiddenByMainToggle = this.onlyMainAccounts && !account.is_Main_Account__c;
-            
-            return !hiddenByLegend && !hiddenByMainToggle;
+            return true;
         });
         
         this.displayedAccounts = filteredAccounts.map(acc => ({
