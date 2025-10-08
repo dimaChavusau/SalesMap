@@ -6,21 +6,15 @@
 .map-body {
     display: flex;
     position: relative;
+    min-height: 100vh;
 }
 
-/* Hamburger Menu - FIXED VERSION */
-.hamburger {
-    position: absolute;
-    background: white;
-    border-radius: 2px;
-    cursor: pointer;
-    z-index: 99;
+/* Hamburger Button */
+.hamburger-box {
+    width: 20px;
+    height: 16px;
     display: inline-block;
-    margin-left: 5px;
-    margin-top: 5px;
-    padding: 15px;
-    border: none;
-    transition: opacity 0.4s;
+    position: relative;
 }
 
 .hamburger-box {
@@ -65,25 +59,21 @@
 
 /* FIXED: Arrow animation for active state (←) */
 .hamburger--arrow.is-active .hamburger-inner {
-    /* Middle line becomes the arrow shaft */
     transform: translateX(0);
 }
 
 .hamburger--arrow.is-active .hamburger-inner::before {
-    /* Top line becomes top part of arrow head */
     width: 10px;
     transform: translateX(-2px) translateY(6px) rotate(-45deg);
     transform-origin: left center;
 }
 
 .hamburger--arrow.is-active .hamburger-inner::after {
-    /* Bottom line becomes bottom part of arrow head */
     width: 10px;
     transform: translateX(-2px) translateY(-6px) rotate(45deg);
     transform-origin: left center;
 }
 
-/* Optional: Add hover effect */
 .hamburger:hover {
     opacity: 0.8;
 }
@@ -99,14 +89,18 @@
     background: white;
     border-right: 1px solid rgba(0,0,0,.2);
     overflow-y: auto;
-    border-radius: 4px;
-    transition: 0.3s all linear;
+    overflow-x: hidden;
+    border-radius: 0;
+    transition: width 0.3s ease, opacity 0.3s ease;
     z-index: 98;
+    flex-shrink: 0; /* Prevent shrinking */
 }
 
 .filter-container.hide {
     width: 0;
+    opacity: 0;
     overflow: hidden;
+    border-right: none;
 }
 
 /* Map Content */
@@ -115,21 +109,75 @@
     background: white;
     padding: 0 20px 20px 20px;
     transition: all 0.3s ease;
+    overflow-x: hidden;
+    min-width: 0; /* Allow shrinking */
 }
 
 .affiliate-map-content.fullWidth {
     margin-left: 0;
 }
 
+/* Responsive breakpoints */
+@media (max-width: 1400px) {
+    .filter-container {
+        width: 280px;
+    }
+}
+@media (max-width: 1200px) {
+    .filter-container {
+        width: 260px;
+    }
+}
+
+@media (max-width: 1080px) {
+    .map-body {
+        flex-direction: column;
+    }
+    
+    .filter-container {
+        width: 100%;
+        max-height: 400px;
+        border-right: none;
+        border-bottom: 1px solid rgba(0,0,0,.2);
+    }
+    
+    .filter-container.hide {
+        max-height: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .hamburger {
+        margin-left: 10px;
+        margin-top: 10px;
+    }
+    
+    .filter-container {
+        max-height: 300px;
+    }
+}
+
 .map-wrapper {
     position: relative;
     margin-top: 20px;
+    overflow: hidden;
 }
 
 .google-map {
     height: 600px;
     border: 1px solid #d8dde6;
     border-radius: 4px;
+    width: 100%;
+}
+
+@media (max-width: 1400px) and (min-width: 1081px) {
+    .filter-container {
+        width: 260px; /* Narrower filter panel */
+    }
+    
+    .google-map {
+        height: 500px; /* Shorter map */
+    }
 }
 
 /* Map Options */

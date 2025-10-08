@@ -48,7 +48,7 @@
                         placeholder="Search..."
                         value={searchTerm}
                         variant="label-hidden"
-                        onchange={handleSearchTermChange}>
+                        oninput={handleSearchTermInput}>
                     </lightning-input>
                 </div>
             </div>
@@ -60,13 +60,11 @@
                     <span class="filter-label">LOCATION</span>
                 </div>
                 <div class="filter-content">
-                    <lightning-input
-                        type="text"
-                        placeholder="Example: 91058, Erlangen, Germany"
-                        value={location}
-                        variant="label-hidden"
-                        onchange={handleLocationSelect}>
-                    </lightning-input>
+                    <c-location-search-input-lwc
+                        search-value={location}
+                        onselectlocation={handleLocationSelect}>
+                    </c-location-search-input-lwc>
+                    
                     <div class="location-radius-container">
                         <lightning-input
                             type="number"
@@ -74,7 +72,7 @@
                             value={radius}
                             variant="label-hidden"
                             class="radius-input"
-                            onchange={handleRadiusChange}>
+                            oninput={handleRadiusInput}>
                         </lightning-input>
                         <lightning-combobox
                             value={unit}

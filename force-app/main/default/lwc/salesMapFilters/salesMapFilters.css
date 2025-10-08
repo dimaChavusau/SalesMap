@@ -1,8 +1,27 @@
 .filter-wrapper {
     background: #ffffff;
     padding: 16px;
-    max-width: 320px;
-    font-family: 'Salesforce Sans', Arial, sans-serif;
+    width: 100%;
+    box-sizing: border-box;
+    overflow-y: auto;
+    max-height: 100%;
+}
+
+.filter-wrapper::-webkit-scrollbar {
+    width: 8px;
+}
+
+.filter-wrapper::-webkit-scrollbar-track {
+    background: #f4f6f9;
+}
+
+.filter-wrapper::-webkit-scrollbar-thumb {
+    background: #c9c9c9;
+    border-radius: 4px;
+}
+
+.filter-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
 }
 
 .help-section {
@@ -13,8 +32,7 @@
 .help-link {
     color: #0176d3;
     text-decoration: none;
-    font-size: 14px;
-    font-weight: 400;
+    font-size: 13px;
 }
 
 .help-link:hover {
@@ -23,22 +41,16 @@
 
 .action-buttons-container {
     display: flex;
-    gap: 12px;
-    margin-bottom: 20px;
+    gap: 8px;
+    margin-bottom: 16px;
 }
 
 .action-button {
     flex: 1;
-    min-height: 40px;
 }
 
 .checkbox-section {
-    margin-bottom: 20px;
-}
-
-.checkbox-section lightning-input {
-    --slds-c-checkbox-label-text-color: #3e3e3c;
-    --slds-c-checkbox-label-font-size: 14px;
+    margin-bottom: 16px;
 }
 
 .filters-container {
@@ -46,51 +58,21 @@
 }
 
 .filter-group {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 
+/* Simplified header to match original */
 .filter-header {
     display: flex;
     align-items: center;
-    background: linear-gradient(to right, #7b68ee, #9370db);
-    color: white;
-    padding: 6px 10px;
-    border-radius: 4px 4px 0 0;
-    margin-bottom: 0;
+    background: transparent;
+    color: #16325c;
+    padding: 4px 0;
+    margin-bottom: 4px;
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.5px;
-}
-
-/* Different color schemes for different sections */
-.filter-group:nth-child(1) .filter-header,
-.filter-group:nth-child(2) .filter-header {
-    background: linear-gradient(to right, #5e9cff, #4a90e2);
-}
-
-.filter-group:nth-child(3) .filter-header {
-    background: linear-gradient(to right, #17a2b8, #138496);
-}
-
-.filter-group:nth-child(4) .filter-header,
-.filter-group:nth-child(5) .filter-header {
-    background: linear-gradient(to right, #9370db, #8a2be2);
-}
-
-.filter-group:nth-child(6) .filter-header,
-.filter-group:nth-child(7) .filter-header,
-.filter-group:nth-child(8) .filter-header {
-    background: linear-gradient(to right, #28a745, #218838);
-}
-
-.filter-group:nth-child(9) .filter-header,
-.filter-group:nth-child(10) .filter-header,
-.filter-group:nth-child(11) .filter-header {
-    background: linear-gradient(to right, #5e9cff, #4a90e2);
-}
-
-.filter-group:nth-child(13) .filter-header {
-    background: linear-gradient(to right, #9370db, #8a2be2);
+    text-transform: uppercase;
 }
 
 .filter-icon {
@@ -102,11 +84,9 @@
 }
 
 .filter-content {
-    background: #fafafa;
-    border: 1px solid #dddbda;
-    border-top: none;
-    padding: 10px;
-    border-radius: 0 0 4px 4px;
+    background: white;
+    padding: 0;
+    border-radius: 4px;
 }
 
 .location-radius-container {
@@ -123,68 +103,8 @@
     flex: 1;
 }
 
-.checkbox-row {
-    padding: 8px 0;
-}
-
 .bottom-buttons {
-    margin-top: 20px;
+    margin-top: 16px;
     padding-top: 16px;
     border-top: 1px solid #e5e5e5;
-}
-
-/* Lightning component overrides for better visual consistency */
-lightning-input,
-lightning-combobox {
-    --slds-c-input-text-color: #181818;
-    --slds-c-input-radius-border: 4px;
-}
-
-lightning-dual-listbox {
-    --slds-c-duallistbox-option-height: 32px;
-}
-
-.filter-content lightning-dual-listbox {
-    width: 100%;
-}
-
-.filter-content lightning-input,
-.filter-content lightning-combobox {
-    width: 100%;
-}
-
-/* Button styling */
-.search-button {
-    --slds-c-button-brand-color-background: #0176d3;
-    --slds-c-button-brand-color-background-hover: #014486;
-    --slds-c-button-brand-color-border: #0176d3;
-    --slds-c-button-brand-color-border-hover: #014486;
-    --slds-c-button-text-color: #ffffff;
-    --slds-c-button-radius-border: 4px;
-    --slds-c-button-spacing-inline-start: 16px;
-    --slds-c-button-spacing-inline-end: 16px;
-}
-
-.reset-button {
-    --slds-c-button-neutral-color-background: #ffffff;
-    --slds-c-button-neutral-color-background-hover: #f3f3f3;
-    --slds-c-button-neutral-color-border: #0176d3;
-    --slds-c-button-neutral-color-border-hover: #014486;
-    --slds-c-button-text-color: #0176d3;
-    --slds-c-button-radius-border: 4px;
-    --slds-c-button-spacing-inline-start: 16px;
-    --slds-c-button-spacing-inline-end: 16px;
-}
-
-/* Ensure proper text styling */
-.help-link,
-.checkbox-section {
-    font-family: 'Salesforce Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
-
-/* Fix checkbox label styling */
-.checkbox-section {
-    text-transform: uppercase;
-    font-size: 13px;
-    letter-spacing: 0.5px;
 }

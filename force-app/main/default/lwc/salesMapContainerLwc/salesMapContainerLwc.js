@@ -95,6 +95,7 @@ export default class SalesMapContainerLwc extends LightningElement {
     @track initialFilterData = {};
     @track hiddenByLegend = new Set();
     @track _allMapMarkers = [];
+    boundResizeHandler;
     
     selectedMarkerValue;
     zoomLevel = 10;
@@ -132,6 +133,59 @@ export default class SalesMapContainerLwc extends LightningElement {
 
     connectedCallback() {
         this.initialize();
+        
+        // Create bound handler once
+        this.boundResizeHandler = () => {
+            if (window.innerWidth < 900 && this.filterPanelOpen) {
+                console.log('Viewport too narrow, auto-closing filter panel');
+                this.filterPanelOpen = false;
+            }
+        };
+        
+        // Add listener
+        window.addEventListener('resize', this.boundResizeHandler);
+    }
+
+    disconnectedCallback() {
+        // Proper cleanup
+        if (this.boundResizeHandler) {
+            window.removeEventListener('resize', this.boundResizeHandler);
+            this.boundResizeHandler = null;
+        }
+    }
+
+    handleResize() {
+        // Auto-close panel on very narrow viewports
+        if (window.innerWidth < 900 && this.filterPanelOpen) {
+            console.log('Viewport too narrow, closing filter panel');
+            this.filterPanelOpen = false;
+        }
+    }
+
+    @api
+    reset() {
+        this.searchTerm = '';
+        this.location = '';
+        this.radius = 50;
+        this.unit = 'km';
+        this.onlyMainAccounts = false;
+        this.excludeDoNotVisit = false;
+        this.selectedTerritories = [];
+        this.selectedTrainers = [];
+        this.selectedCampaigns = [];
+        this.selectedBrands = [];
+        this.selectedLegalHierarchies = [];
+        this.selectedBusinessHierarchies = [];
+        this.selectedDistributionChannels = [];
+        this.selectedAccountStatus = ['Active Account'];
+        this.selectedMerchantStatus = ['All'];
+        this.salesTargetFilter = '';
+        
+        // Clear the location input component
+        const locationInput = this.template.querySelector('c-location-search-input-lwc');
+        if (locationInput) {
+            locationInput.clear();
+        }
     }
 
     async initialize() {
@@ -606,7 +660,7 @@ export default class SalesMapContainerLwc extends LightningElement {
 
     handleSearch() {
         this.performSearch();
-        this.closeFilterPanel();
+        this.closeFilterPanel(); // This will only close on desktop
     }
 
     handleReset() {
@@ -741,10 +795,15 @@ export default class SalesMapContainerLwc extends LightningElement {
 
     toggleFilterPanel() {
         this.filterPanelOpen = !this.filterPanelOpen;
+        console.log('Filter panel toggled:', this.filterPanelOpen);
     }
 
     closeFilterPanel() {
-        this.filterPanelOpen = false;
+        // Only close on larger screens
+        if (window.innerWidth > 1080) {
+            this.filterPanelOpen = false;
+        }
+        // On smaller screens, keep it open for better UX
     }
 
     openEventModal(accountId) {

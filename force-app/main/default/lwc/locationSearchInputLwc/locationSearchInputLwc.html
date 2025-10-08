@@ -4,15 +4,18 @@
             type="text"
             placeholder="Example: 91058, Erlangen, Germany"
             value={searchValue}
-            onchange={handleInputChange}
+            onkeyup={handleInputChange}
             onfocus={handleFocus}
-            onblur={handleBlur}>
+            onblur={handleBlur}
+            variant="label-hidden">
         </lightning-input>
         
         <template if:true={showSuggestions}>
             <div class="suggestions-dropdown">
                 <template if:true={isLoading}>
-                    <lightning-spinner size="small"></lightning-spinner>
+                    <div class="loading-container">
+                        <lightning-spinner size="small"></lightning-spinner>
+                    </div>
                 </template>
                 <template if:false={isLoading}>
                     <ul>

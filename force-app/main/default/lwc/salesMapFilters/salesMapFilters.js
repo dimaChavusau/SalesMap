@@ -50,7 +50,8 @@ export default class SalesMapFilters extends LightningElement {
     
     _initialFilterData = {};
     _preSelectedFilters = {};
-    _searchTimeout;
+    
+    // Remove _searchTimeout - we don't need it anymore
     
     unitOptions = [
         { label: 'km', value: 'km' },
@@ -110,152 +111,102 @@ export default class SalesMapFilters extends LightningElement {
         return "IsActive = true AND Sivantos_Department_del__c = 'Audiology Trainer'";
     }
     
-    get territoryOptions() {
-        if (!this._initialFilterData?.territories) return [];
-        return this._initialFilterData.territories.map(t => ({
-            label: t.Name,
-            value: t.Id
-        }));
-    }
+    // ... keep all the get computed properties ...
     
-    get trainerOptions() {
-        if (!this._initialFilterData?.trainers) return [];
-        return this._initialFilterData.trainers.map(t => ({
-            label: t.Name,
-            value: t.Id
-        }));
-    }
-    
-    get campaignOptions() {
-        if (!this._initialFilterData?.campaigns) return [];
-        return this._initialFilterData.campaigns.map(c => ({
-            label: c.Name,
-            value: c.Id
-        }));
-    }
-    
-    get legalHierarchyOptions() {
-        if (!this._initialFilterData?.legalHierarchies) return [];
-        return this._initialFilterData.legalHierarchies.map(lh => ({
-            label: lh.Name,
-            value: lh.Id
-        }));
-    }
-    
-    get businessHierarchyOptions() {
-        if (!this._initialFilterData?.businessHierarchies) return [];
-        return this._initialFilterData.businessHierarchies.map(bh => ({
-            label: bh.Name,
-            value: bh.Id
-        }));
-    }
-    
-    get selectedTerritoryIds() {
-        return this.selectedTerritories.map(t => t.Id || t);
-    }
-    
-    get selectedTrainerIds() {
-        return this.selectedTrainers.map(t => t.Id || t);
-    }
-    
-    get selectedCampaignIds() {
-        return this.selectedCampaigns.map(c => c.Id || c);
-    }
-    
-    get selectedLegalHierarchyIds() {
-        return this.selectedLegalHierarchies.map(lh => lh.Id || lh);
-    }
-    
-    get selectedBusinessHierarchyIds() {
-        return this.selectedBusinessHierarchies.map(bh => bh.Id || bh);
-    }
-    
+    // CRITICAL FIX: Remove automatic filter firing on change
     handleSearchTermChange(event) {
         this.searchTerm = event.detail.value;
-        
-        // Debounce search term changes
-        if (this._searchTimeout) {
-            clearTimeout(this._searchTimeout);
-        }
-        
-        this._searchTimeout = setTimeout(() => {
-            this.fireFilterChange();
-        }, 500); // Wait 500ms after user stops typing
+        // Don't fire filter change - only update value
     }
     
-    handleLocationSelect(event) {
-        this.location = event.detail.value;
-        this.fireFilterChange();
+    handleLocationInput(event) {
+        this.location = event.target.value;
     }
-    
-    handleRadiusChange(event) {
-        this.radius = event.detail.value;
-        this.fireFilterChange();
+
+    handleRadiusInput(event) {
+        this.radius = event.target.value;
+    }
+
+    handleSearchTermInput(event) {
+        this.searchTerm = event.target.value;
     }
     
     handleUnitChange(event) {
         this.unit = event.detail.value;
-        this.fireFilterChange();
     }
     
     handleMainAccountChange(event) {
         this.onlyMainAccounts = event.detail.checked;
-        this.fireFilterChange();
+    }
+
+    handleLocationSelect(event) {
+        try {
+            console.log('handleLocationSelect called');
+            console.log('Event:', event);
+            console.log('Event detail:', event.detail);
+            
+            if (event && event.detail && event.detail.location) {
+                this.location = event.detail.location;
+                console.log('Location set to:', this.location);
+            } else {
+                console.warn('Invalid event detail:', event);
+            }
+        } catch (error) {
+            console.error('Error in handleLocationSelect:', error);
+        }
     }
     
     handleExcludeDoNotVisitChange(event) {
         this.excludeDoNotVisit = event.detail.checked;
-        this.fireFilterChange();
     }
     
     handleTerritoryChange(event) {
         this.selectedTerritories = event.detail.selectedRecords;
-        this.fireFilterChange();
     }
     
     handleTrainerChange(event) {
         this.selectedTrainers = event.detail.selectedRecords;
-        this.fireFilterChange();
+        // Don't fire filter change - only update value
     }
     
     handleCampaignChange(event) {
         this.selectedCampaigns = event.detail.selectedRecords;
-        this.fireFilterChange();
+        // Don't fire filter change - only update value
     }
     
     handleBrandChange(event) {
         this.selectedBrands = event.detail.value;
-        this.fireFilterChange();
+        // Don't fire filter change - only update value
     }
     
     handleLegalHierarchyChange(event) {
         this.selectedLegalHierarchies = event.detail.selectedRecords;
-        this.fireFilterChange();
+        // Don't fire filter change - only update value
     }
     
     handleBusinessHierarchyChange(event) {
         this.selectedBusinessHierarchies = event.detail.selectedRecords;
-        this.fireFilterChange();
+        // Don't fire filter change - only update value
     }
     
     handleDistributionChannelChange(event) {
         this.selectedDistributionChannels = event.detail.value;
-        this.fireFilterChange();
+        // Don't fire filter change - only update value
     }
     
     handleAccountStatusChange(event) {
         this.selectedAccountStatus = event.detail.value;
-        this.fireFilterChange();
+        // Don't fire filter change - only update value
     }
     
     handleMerchantStatusChange(event) {
         this.selectedMerchantStatus = event.detail.value;
-        this.fireFilterChange();
+        // Don't fire filter change - only update value
     }
     
     handleSalesTargetChange(event) {
         this.salesTargetFilter = event.detail.value;
-        this.fireFilterChange();
+        // Don't fire filter change - only update value
     }
     
     fireFilterChange() {
@@ -284,36 +235,18 @@ export default class SalesMapFilters extends LightningElement {
     }
     
     handleSearch() {
-        // Clear any pending debounced search
-        if (this._searchTimeout) {
-            clearTimeout(this._searchTimeout);
-        }
+        // Fire filter change only when search button is clicked
+        this.fireFilterChange();
         this.dispatchEvent(new CustomEvent('search'));
     }
     
     handleReset() {
-        // Clear any pending debounced search
-        if (this._searchTimeout) {
-            clearTimeout(this._searchTimeout);
-        }
         this.reset();
         this.dispatchEvent(new CustomEvent('reset'));
     }
     
-    disconnectedCallback() {
-        // Clean up timeout when component is destroyed
-        if (this._searchTimeout) {
-            clearTimeout(this._searchTimeout);
-        }
-    }
-    
     @api
     reset() {
-        // Clear any pending debounced search
-        if (this._searchTimeout) {
-            clearTimeout(this._searchTimeout);
-        }
-        
         this.searchTerm = '';
         this.location = '';
         this.radius = 50;

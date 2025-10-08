@@ -17,6 +17,11 @@
     margin-top: 2px;
 }
 
+.loading-container {
+    padding: 12px;
+    text-align: center;
+}
+
 .suggestions-dropdown ul {
     list-style: none;
     margin: 0;
@@ -27,6 +32,7 @@
     padding: 8px 12px;
     cursor: pointer;
     border-bottom: 1px solid #f4f6f9;
+    font-size: 13px;
 }
 
 .suggestions-dropdown li:hover {
@@ -41,4 +47,23 @@
     padding: 12px;
     text-align: center;
     color: #706e8c;
+    font-size: 13px;
+}
+
+/* Scrollbar styling */
+.suggestions-dropdown::-webkit-scrollbar {
+    width: 6px;
+}
+
+.suggestions-dropdown::-webkit-scrollbar-track {
+    background: #f4f6f9;
+}
+
+.suggestions-dropdown::-webkit-scrollbar-thumb {
+    background: #c9c9c9;
+    border-radius: 3px;
+}
+
+.suggestions-dropdown::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
 }
