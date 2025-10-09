@@ -21,7 +21,7 @@ const FIELD_MAPPINGS = {
 const COLOR_MAPS = {
     visit: {
         'green': '#4BCA81',
-        'yellow': '#FFB75D',
+        'yellow': '#FFEB3B',
         'orange': '#FF9A3C',
         'red': '#FF6361',
         'rose': '#FF69B4',
@@ -29,7 +29,7 @@ const COLOR_MAPS = {
     },
     segmentation: {
         'green': '#4BCA81',
-        'yellow': '#FFB75D',
+        'yellow': '#FFEB3B',
         'orange': '#FF9A3C',
         'red': '#FF6361',
         'blue': '#0070D2'
@@ -43,7 +43,7 @@ const COLOR_MAPS = {
     distributionChannel: {
         'blue': '#0070D2',
         'green': '#4BCA81',
-        'yellow': '#FFB75D',
+        'yellow': '#FFEB3B',
         'orange': '#FF9A3C',
         'red': '#FF6361',
         'brown': '#8B4513',
@@ -474,7 +474,7 @@ export default class SalesMapContainerLwc extends LightningElement {
 
     getDistributionChannelColor(colorValue) {
         const colorMap = {
-            'blue': '#0070D2', 'green': '#4BCA81', 'yellow': '#FFB75D',
+            'blue': '#0070D2', 'green': '#4BCA81', 'yellow': '#FFEB3B',
             'orange': '#FF9A3C', 'red': '#FF6361', 'brown': '#8B4513',
             'purple': '#9B59B6', 'pink': '#FF69B4'
         };

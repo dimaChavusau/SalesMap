@@ -44,16 +44,6 @@
             <template if:true={hasAccounts}>
                 <!-- Map Card with Legend Inside -->
                 <lightning-card>
-                    <div slot="actions">
-                        <lightning-button-group>
-                            <lightning-button-icon 
-                                icon-name="utility:expand_alt" 
-                                alternative-text="Fit Map to Markers" 
-                                title="Fit Map to Markers"
-                                onclick={handleFitMapToMarkers}>
-                            </lightning-button-icon>
-                        </lightning-button-group>
-                    </div>
                     
                     <!-- Map Container with Relative Positioning -->
                     <div class="map-wrapper">
@@ -66,6 +56,12 @@
                             onmarkerselect={handleMarkerSelect}
                             class="map-container">
                         </lightning-map>
+
+                        <button class="map-control-button fit-markers-button" 
+                                onclick={handleFitMapToMarkers}
+                                title="Fit Map to Markers">
+                            <lightning-icon icon-name="utility:expand_alt" size="small"></lightning-icon>
+                        </button>
                         
                         <!-- Legend Inside Map -->
                         <c-sales-map-legend

@@ -1,4 +1,4 @@
-// salesMapLegend.js
+// salesMapLegend.js - No changes needed, same as before
 import { LightningElement, api, track } from 'lwc';
 
 export default class SalesMapLegend extends LightningElement {
@@ -6,7 +6,7 @@ export default class SalesMapLegend extends LightningElement {
     @api selectedView;
     @api showLegend = false;
     
-    @track isExpanded = true;
+    @track isExpanded = true;  // Start expanded by default
     @track _legendItems = [];
 
     @api
@@ -23,10 +23,6 @@ export default class SalesMapLegend extends LightningElement {
             textClass: item.crossed ? 'slds-text-body_regular crossed-text' : 'slds-text-body_regular',
             crossed: item.crossed || false
         }));
-    }
-    
-    get collapseIcon() {
-        return this.isExpanded ? 'utility:chevronup' : 'utility:chevrondown';
     }
     
     toggleLegend() {
@@ -84,5 +80,6 @@ export default class SalesMapLegend extends LightningElement {
             articleClass: 'slds-hint-parent legend-item',
             textClass: 'slds-text-body_regular'
         }));
+        this.isExpanded = true; // Reset to expanded
     }
 }

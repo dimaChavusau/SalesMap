@@ -1,20 +1,29 @@
-<!-- salesMapLegend.html -->
+<!-- salesMapLegend.html - FIXED collapse behavior -->
 <template>
     <template if:true={showLegend}>
-        <article class="slds-panel slds-size_medium slds-panel_docked slds-panel_docked-right slds-is-open">
-            <div class="slds-panel__header">
-                <h2 class="slds-panel__header-title slds-text-heading_small slds-truncate">
-                    Legend
-                </h2>
-                <button class="slds-button slds-button_icon slds-button_icon-small slds-panel__close" 
-                        title="Collapse Panel"
-                        onclick={toggleLegend}>
-                    <lightning-icon icon-name={collapseIcon} size="x-small"></lightning-icon>
-                    <span class="slds-assistive-text">Collapse</span>
-                </button>
+        <!-- Collapsed state - just icon button -->
+        <template if:false={isExpanded}>
+            <div class="legend-collapsed-button" onclick={toggleLegend}>
+                <lightning-icon icon-name="utility:rows" size="small"></lightning-icon>
+                <span class="slds-assistive-text">Expand Legend</span>
             </div>
-            
-            <template if:true={isExpanded}>
+        </template>
+        
+        <!-- Expanded state - full panel -->
+        <template if:true={isExpanded}>
+            <article class="slds-panel slds-size_medium slds-panel_docked slds-panel_docked-right slds-is-open">
+                <div class="slds-panel__header">
+                    <h2 class="slds-panel__header-title slds-text-heading_small slds-truncate">
+                        Legend
+                    </h2>
+                    <button class="slds-button slds-button_icon slds-button_icon-small slds-panel__close" 
+                            title="Collapse Panel"
+                            onclick={toggleLegend}>
+                        <lightning-icon icon-name="utility:chevrondown" size="x-small"></lightning-icon>
+                        <span class="slds-assistive-text">Collapse</span>
+                    </button>
+                </div>
+                
                 <div class="slds-panel__body">
                     <ul class="slds-has-dividers_bottom-space">
                         <template for:each={legendItems} for:item="item">
@@ -39,7 +48,7 @@
                         </template>
                     </ul>
                 </div>
-            </template>
-        </article>
+            </article>
+        </template>
     </template>
 </template>

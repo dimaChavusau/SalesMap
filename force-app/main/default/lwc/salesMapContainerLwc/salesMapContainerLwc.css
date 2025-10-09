@@ -14,3 +14,66 @@
         height: 350px;
     }
 }
+
+
+.map-control-button {
+    position: absolute;
+    background: white;
+    border: none;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 999;
+    transition: background-color 0.2s ease;
+}
+
+.map-control-button:hover {
+    background-color: #f3f2f2;
+}
+
+.map-control-button:active {
+    background-color: #e5e5e5;
+}
+
+/* Desktop: Fit to Markers button next to Map/Satellite toggle */
+.fit-markers-button {
+    top: 10px;
+    left: 190px;
+}
+
+/* Tablet - keep horizontal but adjust spacing */
+@media (max-width: 1024px) and (min-width: 768px) {
+    .fit-markers-button {
+        left: 180px; /* Slightly closer on tablets */
+    }
+}
+
+/* Mobile - stack buttons vertically */
+@media (max-width: 767px) {
+    .map-container {
+        height: 350px;
+    }
+    
+    /* Move fit button below Map/Satellite controls */
+    .fit-markers-button {
+        top: 60px; /* Below the Map/Satellite row */
+        left: 10px;
+    }
+}
+
+/* Very small mobile screens */
+@media (max-width: 480px) {
+    .map-container {
+        height: 300px;
+    }
+    
+    .fit-markers-button {
+        top: 55px; /* Tighter spacing on very small screens */
+        left: 10px;
+    }
+}
