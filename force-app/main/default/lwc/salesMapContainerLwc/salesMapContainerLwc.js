@@ -793,11 +793,6 @@ export default class SalesMapContainerLwc extends LightningElement {
         }
     }
 
-    toggleFilterPanel() {
-        this.filterPanelOpen = !this.filterPanelOpen;
-        console.log('Filter panel toggled:', this.filterPanelOpen);
-    }
-
     closeFilterPanel() {
         // Only close on larger screens
         if (window.innerWidth > 1080) {
@@ -1003,5 +998,19 @@ export default class SalesMapContainerLwc extends LightningElement {
 
     get computedStyle() {
         return `top: ${this.position.top}; left: ${this.position.left}; right: auto; bottom: auto;`;
+    }
+    get filterPanelClass() {
+        return this.filterPanelOpen ? '' : 'slds-hide';
+    }
+    get filterPanelSize() {
+        return this.filterPanelOpen ? '3' : '0';
+    }
+    
+    get mapContentSize() {
+        return this.filterPanelOpen ? '9' : '12';
+    }
+    
+    toggleFilterPanel() {
+        this.filterPanelOpen = !this.filterPanelOpen;
     }
 }

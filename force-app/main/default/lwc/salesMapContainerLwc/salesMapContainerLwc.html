@@ -1,117 +1,146 @@
+<!-- salesMapContainerLwc.html -->
 <template>
-    <div class="sales-map-container">
-        <!-- Loading Spinner -->
-        <template if:true={isLoading}>
-            <lightning-spinner variant="brand" alternative-text="Loading accounts..."></lightning-spinner>
-        </template>
-
-        <div class="map-body">
-            <!-- Toggle Button for Filter Panel -->
-            <button class={hamburgerClass} type="button" onclick={toggleFilterPanel}>
-                <span class="hamburger-box">
-                    <span class="hamburger-inner"></span>
-                </span>
-            </button>
-
-            <!-- Filter Panel -->
-            <div class={filterContainerClass}>
-                <c-sales-map-filters
-                    user-affiliate-code={userAffiliateCode}
-                    show-merchant-status-filter={showMerchantStatusFilter}
-                    initial-filter-data={initialFilterData}
-                    pre-selected-filters={filters}
-                    onfilterschange={handleFiltersChange}
-                    onsearch={handleSearch}
-                    onreset={handleReset}>
-                </c-sales-map-filters>
-            </div>
-
-            <!-- Map Content -->
-            <div class={mapContentClass} style={mapContentStyle}>
-                <template if:true={hasAccounts}>
-                    <!-- Map Component -->
-                    <div class="map-wrapper">
-                        <lightning-map
-                            map-markers={mapMarkers}
-                            zoom-level={zoomLevel}
-                            center={mapCenter}
-                            list-view="hidden"
-                            selected-marker-value={selectedMarkerValue}
-                            onmarkerselect={handleMarkerSelect}
-                            class="google-map">
-                        </lightning-map>
-
-                        <!-- Map Options Bar -->
-                        <div class="optionInput">
-                            <button class="map-option-btn" onclick={handleFitMapToMarkers} title="Fit map to markers">
-                                <lightning-icon icon-name="utility:expand" size="small"></lightning-icon>
-                            </button>
-                        </div>
-
-                        <!-- Legend -->
-                        <c-sales-map-legend
-                            selected-view={selectedView}
-                            legend-items={legendItems}
-                            show-legend={showLegend}
-                            onlegenditemtoggle={handleLegendItemToggle}>
-                        </c-sales-map-legend>
+    <lightning-spinner if:true={isLoading} variant="brand" alternative-text="Loading..."></lightning-spinner>
+    
+    <div class="slds-page-header">
+        <div class="slds-page-header__row">
+            <div class="slds-page-header__col-title">
+                <div class="slds-media">
+                    <div class="slds-media__figure">
+                        <lightning-button-icon 
+                            icon-name="utility:side_list" 
+                            alternative-text="Toggle Filters"
+                            title="Toggle Filters"
+                            onclick={toggleFilterPanel}
+                            variant="border-filled">
+                        </lightning-button-icon>
                     </div>
-
-                    <!-- View Options -->
-                    <div class="options-row options-row_margin_small">
-                        <div class="selectViewOptions-wrapper">
-                            <div>Colorize marker based on:</div>
-                            <lightning-combobox
-                                name="viewOptions"
-                                value={selectedView}
-                                options={viewOptions}
-                                onchange={handleViewChange}
-                                variant="label-hidden"
-                                class="selectViewOptions">
-                            </lightning-combobox>
-                        </div>
+                    <div class="slds-media__body">
+                        <h1 class="slds-page-header__title slds-truncate">Sales Map</h1>
                     </div>
-
-                    <!-- Account Table -->
-                    <div class="table-wrapper">
-                        <c-account-data-table
-                            accounts={displayedAccounts}
-                            columns={tableColumns}
-                            title={tableTitle}
-                            show-download-button
-                            onsearch={handleTableSearch}
-                            onrowaction={handleRowAction}>
-                        </c-account-data-table>
-                    </div>
-                </template>
-
-                <template if:false={hasAccounts}>
-                    <div class="simpleMap">
-                        We could not find a Territory assigned to you. Please use the search options to see account data and the map.
-                    </div>
-                </template>
+                </div>
             </div>
         </div>
-
-        <!-- Event Creation Modal -->
-        <template if:true={showEventModal}>
-            <c-account-quick-event-lwc
-                record-id={selectedAccountId}
-                mode="modal"
-                show-close-button
-                show-backdrop
-                oncreated={handleEventCreated}
-                onclose={handleEventClose}>
-            </c-account-quick-event-lwc>
-        </template>
-        
-        <!-- Account Info Panel -->
-        <c-account-info-panel
-            account={selectedAccount}
-            is-open={showInfoPanel}
-            position={infoPanelPosition}
-            onclose={handleInfoPanelClose}
-            oncreateevent={handleInfoPanelCreateEvent}>
-        </c-account-info-panel>
     </div>
+    
+    <lightning-layout multiple-rows class="slds-m-top_small">
+        <!-- Filter Panel -->
+        <lightning-layout-item 
+            size="12" 
+            medium-device-size={filterPanelSize} 
+            class={filterPanelClass}
+            padding="around-small">
+            <c-sales-map-filters
+                user-affiliate-code={userAffiliateCode}
+                show-merchant-status-filter={showMerchantStatusFilter}
+                initial-filter-data={initialFilterData}
+                pre-selected-filters={filters}
+                onfilterschange={handleFiltersChange}
+                onsearch={handleSearch}
+                onreset={handleReset}>
+            </c-sales-map-filters>
+        </lightning-layout-item>
+        
+        <!-- Map Content -->
+        <lightning-layout-item 
+            size="12" 
+            medium-device-size={mapContentSize} 
+            padding="around-small">
+            
+            <template if:true={hasAccounts}>
+                <!-- Map Card -->
+                <lightning-card>
+                    <div slot="actions">
+                        <lightning-button-group>
+                            <lightning-button-icon 
+                                icon-name="utility:expand_alt" 
+                                alternative-text="Fit Map to Markers" 
+                                title="Fit Map to Markers"
+                                onclick={handleFitMapToMarkers}>
+                            </lightning-button-icon>
+                        </lightning-button-group>
+                    </div>
+                    
+                    <lightning-map
+                        map-markers={mapMarkers}
+                        zoom-level={zoomLevel}
+                        center={mapCenter}
+                        list-view="hidden"
+                        selected-marker-value={selectedMarkerValue}
+                        onmarkerselect={handleMarkerSelect}
+                        class="map-container">
+                    </lightning-map>
+                    
+                    <!-- View Options -->
+                    <div class="slds-p-around_small">
+                        <lightning-combobox
+                            name="viewOptions"
+                            label="Colorize markers by"
+                            value={selectedView}
+                            options={viewOptions}
+                            onchange={handleViewChange}>
+                        </lightning-combobox>
+                    </div>
+                </lightning-card>
+                
+                <!-- Account Table -->
+                <div class="slds-m-top_medium">
+                    <c-account-data-table
+                        accounts={displayedAccounts}
+                        columns={tableColumns}
+                        title={tableTitle}
+                        show-download-button
+                        onsearch={handleTableSearch}
+                        onrowaction={handleRowAction}>
+                    </c-account-data-table>
+                </div>
+            </template>
+            
+            <template if:false={hasAccounts}>
+                <lightning-card>
+                    <div class="slds-text-align_center slds-p-around_large">
+                        <lightning-icon 
+                            icon-name="custom:custom19" 
+                            size="large" 
+                            class="slds-m-bottom_small">
+                        </lightning-icon>
+                        <p class="slds-text-heading_medium">No Territory Assigned</p>
+                        <p class="slds-m-top_small">
+                            We could not find a Territory assigned to you. 
+                            Please use the search options to see account data and the map.
+                        </p>
+                    </div>
+                </lightning-card>
+            </template>
+        </lightning-layout-item>
+    </lightning-layout>
+    
+    <!-- Legend Panel (Docked Right) -->
+    <c-sales-map-legend
+        if:true={showLegend}
+        show-legend={showLegend}
+        selected-view={selectedView}
+        legend-items={legendItems}
+        onlegenditemtoggle={handleLegendItemToggle}>
+    </c-sales-map-legend>
+    
+    <!-- Account Info Modal -->
+    <c-account-info-panel
+        if:true={showInfoPanel}
+        account={selectedAccount}
+        is-open={showInfoPanel}
+        onclose={handleInfoPanelClose}
+        oncreateevent={handleInfoPanelCreateEvent}>
+    </c-account-info-panel>
+    
+    <!-- Event Creation Modal -->
+    <c-account-quick-event-lwc
+        if:true={showEventModal}
+        record-id={selectedAccountId}
+        mode="modal"
+        show-close-button
+        show-backdrop
+        oncreated={handleEventCreated}
+        onclose={handleEventClose}>
+    </c-account-quick-event-lwc>
 </template>

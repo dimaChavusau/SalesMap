@@ -1,36 +1,45 @@
+<!-- salesMapLegend.html -->
 <template>
     <template if:true={showLegend}>
-        <div class="legend-container">
-            <div class="legend-header" onclick={toggleLegend}>
-                <div class="hamburger-icon">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </div>
+        <article class="slds-panel slds-size_medium slds-panel_docked slds-panel_docked-right slds-is-open">
+            <div class="slds-panel__header">
+                <h2 class="slds-panel__header-title slds-text-heading_small slds-truncate">
+                    Legend
+                </h2>
+                <button class="slds-button slds-button_icon slds-button_icon-small slds-panel__close" 
+                        title="Collapse Panel"
+                        onclick={toggleLegend}>
+                    <lightning-icon icon-name={collapseIcon} size="x-small"></lightning-icon>
+                    <span class="slds-assistive-text">Collapse</span>
+                </button>
             </div>
+            
             <template if:true={isExpanded}>
-                <div class="legend-content">
-                    <table class="legend-table">
-                        <tbody>
-                            <template for:each={legendItems} for:item="item">
-                                <tr key={item.id} 
-                                    class={item.rowClass}
-                                    data-id={item.id}
-                                    data-icon={item.iconValue}
-                                    data-field={item.field}
-                                    onclick={handleLegendItemClick}>
-                                    <td class={item.colorClass}>
-                                        <span class="legend-square" style={item.style}></span>
-                                    </td>
-                                    <td class={item.labelClass}>
-                                        <span>{item.label}</span>
-                                    </td>
-                                </tr>
-                            </template>
-                        </tbody>
-                    </table>
+                <div class="slds-panel__body">
+                    <ul class="slds-has-dividers_bottom-space">
+                        <template for:each={legendItems} for:item="item">
+                            <li key={item.id} class="slds-item" data-id={item.id}>
+                                <article class={item.articleClass} 
+                                         onclick={handleLegendItemClick}
+                                         data-id={item.id}
+                                         data-icon={item.iconValue}>
+                                    <div class="slds-grid slds-grid_vertical-align-center slds-p-around_x-small">
+                                        <div class="slds-col slds-no-flex">
+                                            <span class="legend-color-indicator" style={item.style}></span>
+                                        </div>
+                                        <div class="slds-col slds-p-left_small">
+                                            <p class={item.textClass}>{item.label}</p>
+                                            <template if:true={item.count}>
+                                                <p class="slds-text-body_small slds-text-color_weak">({item.count})</p>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </article>
+                            </li>
+                        </template>
+                    </ul>
                 </div>
             </template>
-        </div>
+        </article>
     </template>
 </template>

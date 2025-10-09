@@ -1,0 +1,206 @@
+<!-- accountInfoContent.html -->
+<template>
+    <div class="slds-grid slds-wrap slds-gutters_small">
+        <!-- Sales Visit -->
+        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
+            <article class="slds-card slds-card_boundary">
+                <div class="slds-card__header slds-grid">
+                    <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                        <div class="slds-media__figure">
+                            <lightning-icon icon-name="standard:event" size="small"></lightning-icon>
+                        </div>
+                        <div class="slds-media__body">
+                            <h2 class="slds-card__header-title">
+                                <span>Sales Visit</span>
+                            </h2>
+                        </div>
+                    </header>
+                </div>
+                <div class="slds-card__body slds-card__body_inner">
+                    <dl class="slds-dl_horizontal">
+                        <dt class="slds-dl_horizontal__label">
+                            <p class="slds-truncate">Next:</p>
+                        </dt>
+                        <dd class="slds-dl_horizontal__detail slds-tile__meta" lwc:dom="manual" data-field="nextSalesVisit"></dd>
+                        
+                        <dt class="slds-dl_horizontal__label">
+                            <p class="slds-truncate">Last:</p>
+                        </dt>
+                        <dd class="slds-dl_horizontal__detail slds-tile__meta" lwc:dom="manual" data-field="lastSalesVisit"></dd>
+                        
+                        <dt class="slds-dl_horizontal__label">
+                            <p class="slds-truncate">Target:</p>
+                        </dt>
+                        <dd class="slds-dl_horizontal__detail slds-tile__meta">
+                            <p class="slds-truncate">{plannedVisits}</p>
+                        </dd>
+                        
+                        <dt class="slds-dl_horizontal__label">
+                            <p class="slds-truncate">Actual:</p>
+                        </dt>
+                        <dd class="slds-dl_horizontal__detail slds-tile__meta">
+                            <p class="slds-truncate">{actualVisits}</p>
+                        </dd>
+                    </dl>
+                </div>
+            </article>
+        </div>
+        
+        <!-- Training Event -->
+        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
+            <article class="slds-card slds-card_boundary">
+                <div class="slds-card__header slds-grid">
+                    <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                        <div class="slds-media__figure">
+                            <lightning-icon icon-name="standard:event" size="small"></lightning-icon>
+                        </div>
+                        <div class="slds-media__body">
+                            <h2 class="slds-card__header-title">
+                                <span>Training Event</span>
+                            </h2>
+                        </div>
+                    </header>
+                </div>
+                <div class="slds-card__body slds-card__body_inner">
+                    <dl class="slds-dl_horizontal">
+                        <dt class="slds-dl_horizontal__label">
+                            <p class="slds-truncate">Next:</p>
+                        </dt>
+                        <dd class="slds-dl_horizontal__detail slds-tile__meta" lwc:dom="manual" data-field="nextTrainingEvent"></dd>
+                        
+                        <dt class="slds-dl_horizontal__label">
+                            <p class="slds-truncate">Last:</p>
+                        </dt>
+                        <dd class="slds-dl_horizontal__detail slds-tile__meta" lwc:dom="manual" data-field="lastTrainingEvent"></dd>
+                        
+                        <dt class="slds-dl_horizontal__label">
+                            <p class="slds-truncate">Target:</p>
+                        </dt>
+                        <dd class="slds-dl_horizontal__detail slds-tile__meta">
+                            <p class="slds-truncate">{plannedTrainings}</p>
+                        </dd>
+                        
+                        <dt class="slds-dl_horizontal__label">
+                            <p class="slds-truncate">Actual:</p>
+                        </dt>
+                        <dd class="slds-dl_horizontal__detail slds-tile__meta">
+                            <p class="slds-truncate">{actualTrainings}</p>
+                        </dd>
+                    </dl>
+                </div>
+            </article>
+        </div>
+        
+        <!-- Contact Info -->
+        <div class="slds-col slds-size_1-of-1">
+            <article class="slds-card slds-card_boundary">
+                <div class="slds-card__header slds-grid">
+                    <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                        <div class="slds-media__figure">
+                            <lightning-icon icon-name="standard:contact" size="small"></lightning-icon>
+                        </div>
+                        <div class="slds-media__body">
+                            <h2 class="slds-card__header-title">
+                                <span>Contact Info</span>
+                            </h2>
+                        </div>
+                    </header>
+                </div>
+                <div class="slds-card__body slds-card__body_inner">
+                    <dl class="slds-dl_horizontal">
+                        <dt class="slds-dl_horizontal__label">
+                            <p class="slds-truncate">Address:</p>
+                        </dt>
+                        <dd class="slds-dl_horizontal__detail slds-tile__meta">
+                            <p>{formattedAddress}</p>
+                        </dd>
+                        
+                        <dt class="slds-dl_horizontal__label">
+                            <p class="slds-truncate">Phone:</p>
+                        </dt>
+                        <dd class="slds-dl_horizontal__detail slds-tile__meta">
+                            <p class="slds-truncate">{phone}</p>
+                        </dd>
+                    </dl>
+                </div>
+            </article>
+        </div>
+        
+        <!-- Business Info -->
+        <div class="slds-col slds-size_1-of-1">
+            <article class="slds-card slds-card_boundary">
+                <div class="slds-card__header slds-grid">
+                    <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                        <div class="slds-media__figure">
+                            <lightning-icon icon-name="standard:account" size="small"></lightning-icon>
+                        </div>
+                        <div class="slds-media__body">
+                            <h2 class="slds-card__header-title">
+                                <span>Business Info</span>
+                            </h2>
+                        </div>
+                    </header>
+                </div>
+                <div class="slds-card__body slds-card__body_inner">
+                    <dl class="slds-dl_horizontal">
+                        <dt class="slds-dl_horizontal__label">
+                            <p class="slds-truncate">Legal Hierarchy:</p>
+                        </dt>
+                        <dd class="slds-dl_horizontal__detail slds-tile__meta">
+                            <p>{legalHierarchy}</p>
+                        </dd>
+                        
+                        <dt class="slds-dl_horizontal__label">
+                            <p class="slds-truncate">Business Hierarchy:</p>
+                        </dt>
+                        <dd class="slds-dl_horizontal__detail slds-tile__meta">
+                            <p>{businessHierarchy}</p>
+                        </dd>
+                        
+                        <dt class="slds-dl_horizontal__label">
+                            <p class="slds-truncate">Territory:</p>
+                        </dt>
+                        <dd class="slds-dl_horizontal__detail slds-tile__meta">
+                            <p class="slds-truncate">{territory}</p>
+                        </dd>
+                        
+                        <dt class="slds-dl_horizontal__label">
+                            <p class="slds-truncate">Brand:</p>
+                        </dt>
+                        <dd class="slds-dl_horizontal__detail slds-tile__meta">
+                            <p class="slds-truncate">{brand}</p>
+                        </dd>
+                        
+                        <dt class="slds-dl_horizontal__label">
+                            <p class="slds-truncate">Segmentation (POS):</p>
+                        </dt>
+                        <dd class="slds-dl_horizontal__detail slds-tile__meta">
+                            <p class="slds-truncate">{segmentationPOS}</p>
+                        </dd>
+                        
+                        <dt class="slds-dl_horizontal__label">
+                            <p class="slds-truncate">Segmentation (CG):</p>
+                        </dt>
+                        <dd class="slds-dl_horizontal__detail slds-tile__meta">
+                            <p class="slds-truncate">{segmentationCG}</p>
+                        </dd>
+                        
+                        <dt class="slds-dl_horizontal__label">
+                            <p class="slds-truncate">Segmentation (Owner):</p>
+                        </dt>
+                        <dd class="slds-dl_horizontal__detail slds-tile__meta">
+                            <p class="slds-truncate">{segmentationOwner}</p>
+                        </dd>
+                        
+                        <dt class="slds-dl_horizontal__label">
+                            <p class="slds-truncate">Distribution Channel:</p>
+                        </dt>
+                        <dd class="slds-dl_horizontal__detail slds-tile__meta">
+                            <p class="slds-truncate">{distributionChannel}</p>
+                        </dd>
+                    </dl>
+                </div>
+            </article>
+        </div>
+    </div>
+</template>

@@ -1,3 +1,4 @@
+// salesMapFilters.js (same as before, no changes needed)
 import { LightningElement, api, track } from 'lwc';
 
 export default class SalesMapFilters extends LightningElement {
@@ -12,6 +13,18 @@ export default class SalesMapFilters extends LightningElement {
         this._initialFilterData = value;
         if (value && value.distributionChannels) {
             this.distributionChannelOptions = value.distributionChannels;
+        }
+        if (value && value.legalHierarchies) {
+            this.legalHierarchyOptions = value.legalHierarchies.map(h => ({
+                label: h.Name,
+                value: h.Id
+            }));
+        }
+        if (value && value.businessHierarchies) {
+            this.businessHierarchyOptions = value.businessHierarchies.map(h => ({
+                label: h.Name,
+                value: h.Id
+            }));
         }
     }
     
@@ -43,15 +56,19 @@ export default class SalesMapFilters extends LightningElement {
     @track selectedBrands = [];
     @track selectedLegalHierarchies = [];
     @track selectedBusinessHierarchies = [];
+    @track selectedLegalHierarchyIds = [];
+    @track selectedBusinessHierarchyIds = [];
     @track selectedDistributionChannels = [];
     @track selectedAccountStatus = ['Active Account'];
     @track selectedMerchantStatus = ['All'];
     @track salesTargetFilter = '';
+    @track activeSections = ['search', 'location', 'territories'];
     
     _initialFilterData = {};
     _preSelectedFilters = {};
     
-    // Remove _searchTimeout - we don't need it anymore
+    legalHierarchyOptions = [];
+    businessHierarchyOptions = [];
     
     unitOptions = [
         { label: 'km', value: 'km' },
@@ -111,24 +128,18 @@ export default class SalesMapFilters extends LightningElement {
         return "IsActive = true AND Sivantos_Department_del__c = 'Audiology Trainer'";
     }
     
-    // ... keep all the get computed properties ...
-    
-    // CRITICAL FIX: Remove automatic filter firing on change
-    handleSearchTermChange(event) {
-        this.searchTerm = event.detail.value;
-        // Don't fire filter change - only update value
-    }
-    
-    handleLocationInput(event) {
-        this.location = event.target.value;
-    }
-
-    handleRadiusInput(event) {
-        this.radius = event.target.value;
-    }
-
     handleSearchTermInput(event) {
         this.searchTerm = event.target.value;
+    }
+    
+    handleLocationSelect(event) {
+        if (event && event.detail && event.detail.location) {
+            this.location = event.detail.location;
+        }
+    }
+    
+    handleRadiusInput(event) {
+        this.radius = event.target.value;
     }
     
     handleUnitChange(event) {
@@ -137,23 +148,6 @@ export default class SalesMapFilters extends LightningElement {
     
     handleMainAccountChange(event) {
         this.onlyMainAccounts = event.detail.checked;
-    }
-
-    handleLocationSelect(event) {
-        try {
-            console.log('handleLocationSelect called');
-            console.log('Event:', event);
-            console.log('Event detail:', event.detail);
-            
-            if (event && event.detail && event.detail.location) {
-                this.location = event.detail.location;
-                console.log('Location set to:', this.location);
-            } else {
-                console.warn('Invalid event detail:', event);
-            }
-        } catch (error) {
-            console.error('Error in handleLocationSelect:', error);
-        }
     }
     
     handleExcludeDoNotVisitChange(event) {
@@ -166,50 +160,47 @@ export default class SalesMapFilters extends LightningElement {
     
     handleTrainerChange(event) {
         this.selectedTrainers = event.detail.selectedRecords;
-        // Don't fire filter change - only update value
     }
     
     handleCampaignChange(event) {
         this.selectedCampaigns = event.detail.selectedRecords;
-        // Don't fire filter change - only update value
     }
     
     handleBrandChange(event) {
         this.selectedBrands = event.detail.value;
-        // Don't fire filter change - only update value
     }
     
     handleLegalHierarchyChange(event) {
-        this.selectedLegalHierarchies = event.detail.selectedRecords;
-        // Don't fire filter change - only update value
+        this.selectedLegalHierarchyIds = event.detail.value;
+        this.selectedLegalHierarchies = this._initialFilterData.legalHierarchies.filter(
+            h => this.selectedLegalHierarchyIds.includes(h.Id)
+        );
     }
     
     handleBusinessHierarchyChange(event) {
-        this.selectedBusinessHierarchies = event.detail.selectedRecords;
-        // Don't fire filter change - only update value
+        this.selectedBusinessHierarchyIds = event.detail.value;
+        this.selectedBusinessHierarchies = this._initialFilterData.businessHierarchies.filter(
+            h => this.selectedBusinessHierarchyIds.includes(h.Id)
+        );
     }
     
     handleDistributionChannelChange(event) {
         this.selectedDistributionChannels = event.detail.value;
-        // Don't fire filter change - only update value
     }
     
     handleAccountStatusChange(event) {
         this.selectedAccountStatus = event.detail.value;
-        // Don't fire filter change - only update value
     }
     
     handleMerchantStatusChange(event) {
         this.selectedMerchantStatus = event.detail.value;
-        // Don't fire filter change - only update value
     }
     
     handleSalesTargetChange(event) {
         this.salesTargetFilter = event.detail.value;
-        // Don't fire filter change - only update value
     }
     
-    fireFilterChange() {
+    handleSearch() {
         const filters = {
             searchTerm: this.searchTerm,
             location: this.location,
@@ -229,14 +220,7 @@ export default class SalesMapFilters extends LightningElement {
             salesTargetFilterCode: this.salesTargetFilter ? parseInt(this.salesTargetFilter) : null
         };
         
-        this.dispatchEvent(new CustomEvent('filterschange', {
-            detail: filters
-        }));
-    }
-    
-    handleSearch() {
-        // Fire filter change only when search button is clicked
-        this.fireFilterChange();
+        this.dispatchEvent(new CustomEvent('filterschange', { detail: filters }));
         this.dispatchEvent(new CustomEvent('search'));
     }
     
@@ -259,9 +243,19 @@ export default class SalesMapFilters extends LightningElement {
         this.selectedBrands = [];
         this.selectedLegalHierarchies = [];
         this.selectedBusinessHierarchies = [];
+        this.selectedLegalHierarchyIds = [];
+        this.selectedBusinessHierarchyIds = [];
         this.selectedDistributionChannels = [];
         this.selectedAccountStatus = ['Active Account'];
         this.selectedMerchantStatus = ['All'];
         this.salesTargetFilter = '';
+        
+        // Clear lookup components
+        const lookupComponents = this.template.querySelectorAll('c-multi-select-lookup-lwc');
+        lookupComponents.forEach(component => {
+            if (component.clearSelection) {
+                component.clearSelection();
+            }
+        });
     }
 }

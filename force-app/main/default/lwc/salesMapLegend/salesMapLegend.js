@@ -1,3 +1,4 @@
+// salesMapLegend.js
 import { LightningElement, api, track } from 'lwc';
 
 export default class SalesMapLegend extends LightningElement {
@@ -17,14 +18,13 @@ export default class SalesMapLegend extends LightningElement {
             style: `background-color: ${item.color}`,
             iconValue: item.iconValue || item.color,
             field: this.selectedView,
-            rowClass: item.crossed ? 'legend-row crossed' : 'legend-row',
-            colorClass: item.crossed ? 'color-cell crossed' : 'color-cell',
-            labelClass: item.crossed ? 'label-cell crossed' : 'label-cell',
+            articleClass: item.crossed ? 'slds-hint-parent legend-item crossed' : 'slds-hint-parent legend-item',
+            textClass: item.crossed ? 'slds-text-body_regular crossed-text' : 'slds-text-body_regular',
             crossed: item.crossed || false
         }));
     }
     
-    get expandIcon() {
+    get collapseIcon() {
         return this.isExpanded ? 'utility:chevronup' : 'utility:chevrondown';
     }
     
@@ -35,10 +35,9 @@ export default class SalesMapLegend extends LightningElement {
     handleLegendItemClick(event) {
         event.stopPropagation();
         
-        const row = event.currentTarget;
-        const itemId = row.dataset.id;
-        const iconValue = row.dataset.icon;
-        const field = row.dataset.field;
+        const article = event.currentTarget;
+        const itemId = article.dataset.id;
+        const iconValue = article.dataset.icon;
         
         // Check if this is the last visible (non-crossed) item
         const nonCrossedItems = this._legendItems.filter(item => !item.crossed);
@@ -56,9 +55,8 @@ export default class SalesMapLegend extends LightningElement {
                 return {
                     ...item,
                     crossed: newCrossed,
-                    rowClass: newCrossed ? 'legend-row crossed' : 'legend-row',
-                    colorClass: newCrossed ? 'color-cell crossed' : 'color-cell',
-                    labelClass: newCrossed ? 'label-cell crossed' : 'label-cell'
+                    articleClass: newCrossed ? 'slds-hint-parent legend-item crossed' : 'slds-hint-parent legend-item',
+                    textClass: newCrossed ? 'slds-text-body_regular crossed-text' : 'slds-text-body_regular'
                 };
             }
             return item;
@@ -71,7 +69,7 @@ export default class SalesMapLegend extends LightningElement {
             detail: {
                 itemId,
                 iconValue,
-                field,
+                field: this.selectedView,
                 crossed: updatedItems.find(item => item.id === itemId).crossed
             }
         }));
@@ -82,9 +80,8 @@ export default class SalesMapLegend extends LightningElement {
         this._legendItems = this._legendItems.map(item => ({
             ...item,
             crossed: false,
-            rowClass: 'legend-row',
-            colorClass: 'color-cell',
-            labelClass: 'label-cell'
+            articleClass: 'slds-hint-parent legend-item',
+            textClass: 'slds-text-body_regular'
         }));
     }
 }
