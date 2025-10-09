@@ -1,17 +1,16 @@
-/* salesMapContainerLwc.css */
+/* salesMapContainerLwc.css - CORRECTED */
+.map-wrapper {
+    position: relative;
+    width: 100%;
+}
+
 .map-container {
     height: 500px;
     width: 100%;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
     .map-container {
         height: 350px;
-    }
-}
-
-@media (min-width: 48em) {
-    .slds-hide {
-        display: none;
     }
 }

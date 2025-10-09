@@ -659,8 +659,19 @@ export default class SalesMapContainerLwc extends LightningElement {
     }
 
     handleSearch() {
+        console.log('handleSearch called');
         this.performSearch();
-        this.closeFilterPanel(); // This will only close on desktop
+        
+        // Auto-close filter panel after search on desktop
+        this.autoCloseFilterPanel();
+    }
+
+    autoCloseFilterPanel() {
+        // Close filter panel on desktop (> 1024px)
+        // Keep open on mobile for better UX
+        if (window.innerWidth > 1024) {
+            this.filterPanelOpen = false;
+        }
     }
 
     handleReset() {
@@ -794,11 +805,9 @@ export default class SalesMapContainerLwc extends LightningElement {
     }
 
     closeFilterPanel() {
-        // Only close on larger screens
         if (window.innerWidth > 1080) {
             this.filterPanelOpen = false;
         }
-        // On smaller screens, keep it open for better UX
     }
 
     openEventModal(accountId) {
@@ -981,7 +990,8 @@ export default class SalesMapContainerLwc extends LightningElement {
     }
 
     get mapContentClass() {
-        return `affiliate-map-content ${this.filterPanelOpen ? '' : 'fullWidth'}`;
+        const baseClass = 'map-content';
+        return this.filterPanelOpen ? baseClass : `${baseClass} map-content-full`;
     }
 
     get mapContentStyle() {
@@ -1000,15 +1010,17 @@ export default class SalesMapContainerLwc extends LightningElement {
         return `top: ${this.position.top}; left: ${this.position.left}; right: auto; bottom: auto;`;
     }
     get filterPanelClass() {
-        return this.filterPanelOpen ? '' : 'slds-hide';
+        const baseClass = 'filter-panel';
+        return this.filterPanelOpen ? baseClass : `${baseClass} filter-panel-hidden`;
     }
-    get filterPanelSize() {
-        return this.filterPanelOpen ? '3' : '0';
+
+    get mapContentGridClass() {
+        if (this.filterPanelOpen) {
+            return 'slds-col slds-size_1-of-1 slds-medium-size_9-of-12 slds-large-size_9-of-12';
+        }
+        return 'slds-col slds-size_1-of-1';
     }
     
-    get mapContentSize() {
-        return this.filterPanelOpen ? '9' : '12';
-    }
     
     toggleFilterPanel() {
         this.filterPanelOpen = !this.filterPanelOpen;

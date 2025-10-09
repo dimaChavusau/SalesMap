@@ -1,4 +1,4 @@
-<!-- salesMapContainerLwc.html -->
+<!-- salesMapContainerLwc.html - CORRECTED -->
 <template>
     <lightning-spinner if:true={isLoading} variant="brand" alternative-text="Loading..."></lightning-spinner>
     
@@ -23,32 +23,26 @@
         </div>
     </div>
     
-    <lightning-layout multiple-rows class="slds-m-top_small">
+    <div class="slds-grid slds-wrap slds-gutters_small slds-m-top_small">
         <!-- Filter Panel -->
-        <lightning-layout-item 
-            size="12" 
-            medium-device-size={filterPanelSize} 
-            class={filterPanelClass}
-            padding="around-small">
-            <c-sales-map-filters
-                user-affiliate-code={userAffiliateCode}
-                show-merchant-status-filter={showMerchantStatusFilter}
-                initial-filter-data={initialFilterData}
-                pre-selected-filters={filters}
-                onfilterschange={handleFiltersChange}
-                onsearch={handleSearch}
-                onreset={handleReset}>
-            </c-sales-map-filters>
-        </lightning-layout-item>
+        <template if:true={filterPanelOpen}>
+            <div class="slds-col slds-size_1-of-1 slds-medium-size_3-of-12 slds-large-size_3-of-12">
+                <c-sales-map-filters
+                    user-affiliate-code={userAffiliateCode}
+                    show-merchant-status-filter={showMerchantStatusFilter}
+                    initial-filter-data={initialFilterData}
+                    pre-selected-filters={filters}
+                    onfilterschange={handleFiltersChange}
+                    onsearch={handleSearch}
+                    onreset={handleReset}>
+                </c-sales-map-filters>
+            </div>
+        </template>
         
         <!-- Map Content -->
-        <lightning-layout-item 
-            size="12" 
-            medium-device-size={mapContentSize} 
-            padding="around-small">
-            
+        <div class={mapContentGridClass}>
             <template if:true={hasAccounts}>
-                <!-- Map Card -->
+                <!-- Map Card with Legend Inside -->
                 <lightning-card>
                     <div slot="actions">
                         <lightning-button-group>
@@ -61,15 +55,27 @@
                         </lightning-button-group>
                     </div>
                     
-                    <lightning-map
-                        map-markers={mapMarkers}
-                        zoom-level={zoomLevel}
-                        center={mapCenter}
-                        list-view="hidden"
-                        selected-marker-value={selectedMarkerValue}
-                        onmarkerselect={handleMarkerSelect}
-                        class="map-container">
-                    </lightning-map>
+                    <!-- Map Container with Relative Positioning -->
+                    <div class="map-wrapper">
+                        <lightning-map
+                            map-markers={mapMarkers}
+                            zoom-level={zoomLevel}
+                            center={mapCenter}
+                            list-view="hidden"
+                            selected-marker-value={selectedMarkerValue}
+                            onmarkerselect={handleMarkerSelect}
+                            class="map-container">
+                        </lightning-map>
+                        
+                        <!-- Legend Inside Map -->
+                        <c-sales-map-legend
+                            if:true={showLegend}
+                            show-legend={showLegend}
+                            selected-view={selectedView}
+                            legend-items={legendItems}
+                            onlegenditemtoggle={handleLegendItemToggle}>
+                        </c-sales-map-legend>
+                    </div>
                     
                     <!-- View Options -->
                     <div class="slds-p-around_small">
@@ -112,17 +118,8 @@
                     </div>
                 </lightning-card>
             </template>
-        </lightning-layout-item>
-    </lightning-layout>
-    
-    <!-- Legend Panel (Docked Right) -->
-    <c-sales-map-legend
-        if:true={showLegend}
-        show-legend={showLegend}
-        selected-view={selectedView}
-        legend-items={legendItems}
-        onlegenditemtoggle={handleLegendItemToggle}>
-    </c-sales-map-legend>
+        </div>
+    </div>
     
     <!-- Account Info Modal -->
     <c-account-info-panel

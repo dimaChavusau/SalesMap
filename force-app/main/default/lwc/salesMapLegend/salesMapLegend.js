@@ -2,12 +2,13 @@
 import { LightningElement, api, track } from 'lwc';
 
 export default class SalesMapLegend extends LightningElement {
+
     @api selectedView;
     @api showLegend = false;
     
     @track isExpanded = true;
     @track _legendItems = [];
-    
+
     @api
     get legendItems() {
         return this._legendItems;
