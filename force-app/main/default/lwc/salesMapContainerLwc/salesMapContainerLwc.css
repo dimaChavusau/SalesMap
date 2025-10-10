@@ -1,4 +1,20 @@
-/* salesMapContainerLwc.css - CORRECTED */
+/* salesMapContainerLwc.css - FIXED spacing and positioning */
+:host {
+    display: block;
+    padding: 0;
+    margin: 0;
+}
+
+/* Remove all top spacing */
+.slds-grid {
+    margin-top: 0 !important;
+}
+
+/* Ensure cards have no extra margin */
+lightning-card {
+    margin-top: 0;
+}
+
 .map-wrapper {
     position: relative;
     width: 100%;
@@ -14,7 +30,6 @@
         height: 350px;
     }
 }
-
 
 .map-control-button {
     position: absolute;
@@ -40,40 +55,42 @@
     background-color: #e5e5e5;
 }
 
-/* Desktop: Fit to Markers button next to Map/Satellite toggle */
 .fit-markers-button {
     top: 10px;
     left: 190px;
 }
 
-/* Tablet - keep horizontal but adjust spacing */
 @media (max-width: 1024px) and (min-width: 768px) {
     .fit-markers-button {
-        left: 180px; /* Slightly closer on tablets */
+        left: 180px;
     }
 }
 
-/* Mobile - stack buttons vertically */
 @media (max-width: 767px) {
     .map-container {
         height: 350px;
     }
     
-    /* Move fit button below Map/Satellite controls */
     .fit-markers-button {
-        top: 60px; /* Below the Map/Satellite row */
+        top: 60px;
         left: 10px;
     }
 }
 
-/* Very small mobile screens */
 @media (max-width: 480px) {
     .map-container {
         height: 300px;
     }
     
     .fit-markers-button {
-        top: 55px; /* Tighter spacing on very small screens */
+        top: 55px;
         left: 10px;
     }
+}
+
+/* Custom header styling */
+.slds-card__header-title {
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.25;
 }

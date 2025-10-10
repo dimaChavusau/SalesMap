@@ -1,29 +1,8 @@
-<!-- salesMapContainerLwc.html - CORRECTED -->
+<!-- salesMapContainerLwc.html - FIXED positioning -->
 <template>
     <lightning-spinner if:true={isLoading} variant="brand" alternative-text="Loading..."></lightning-spinner>
     
-    <div class="slds-page-header">
-        <div class="slds-page-header__row">
-            <div class="slds-page-header__col-title">
-                <div class="slds-media">
-                    <div class="slds-media__figure">
-                        <lightning-button-icon 
-                            icon-name="utility:side_list" 
-                            alternative-text="Toggle Filters"
-                            title="Toggle Filters"
-                            onclick={toggleFilterPanel}
-                            variant="border-filled">
-                        </lightning-button-icon>
-                    </div>
-                    <div class="slds-media__body">
-                        <h1 class="slds-page-header__title slds-truncate">Sales Map</h1>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="slds-grid slds-wrap slds-gutters_small slds-m-top_small">
+    <div class="slds-grid slds-wrap slds-gutters_small">
         <!-- Filter Panel -->
         <template if:true={filterPanelOpen}>
             <div class="slds-col slds-size_1-of-1 slds-medium-size_3-of-12 slds-large-size_3-of-12">
@@ -42,10 +21,36 @@
         <!-- Map Content -->
         <div class={mapContentGridClass}>
             <template if:true={hasAccounts}>
-                <!-- Map Card with Legend Inside -->
+                <!-- Map Card with custom header -->
                 <lightning-card>
+                    <!-- Custom Header with Toggle Button on Left -->
+                    <div slot="title">
+                        <div class="slds-media slds-media_center">
+                            <div class="slds-media__figure">
+                                <lightning-button-icon 
+                                    icon-name="utility:side_list" 
+                                    alternative-text="Toggle Filters"
+                                    title="Toggle Filters"
+                                    onclick={toggleFilterPanel}
+                                    variant="border-filled">
+                                </lightning-button-icon>
+                            </div>
+                            <div class="slds-media__body">
+                                <h2 class="slds-card__header-title">
+                                    <span>Sales Map</span>
+                                </h2>
+                            </div>
+                        </div>
+                    </div>
                     
-                    <!-- Map Container with Relative Positioning -->
+                    <div slot="actions">
+                        <a href="/lightning/r/ContentDocument/0691p0000074OSjAAM/view" 
+                           target="_blank"
+                           class="slds-text-link">
+                            Help & Guide
+                        </a>
+                    </div>
+                    
                     <div class="map-wrapper">
                         <lightning-map
                             map-markers={mapMarkers}
@@ -63,7 +68,6 @@
                             <lightning-icon icon-name="utility:expand_alt" size="small"></lightning-icon>
                         </button>
                         
-                        <!-- Legend Inside Map -->
                         <c-sales-map-legend
                             if:true={showLegend}
                             show-legend={showLegend}
@@ -100,6 +104,26 @@
             
             <template if:false={hasAccounts}>
                 <lightning-card>
+                    <!-- Custom Header for No Data State -->
+                    <div slot="title">
+                        <div class="slds-media slds-media_center">
+                            <div class="slds-media__figure">
+                                <lightning-button-icon 
+                                    icon-name="utility:side_list" 
+                                    alternative-text="Toggle Filters"
+                                    title="Toggle Filters"
+                                    onclick={toggleFilterPanel}
+                                    variant="border-filled">
+                                </lightning-button-icon>
+                            </div>
+                            <div class="slds-media__body">
+                                <h2 class="slds-card__header-title">
+                                    <span>Sales Map</span>
+                                </h2>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="slds-text-align_center slds-p-around_large">
                         <lightning-icon 
                             icon-name="custom:custom19" 
