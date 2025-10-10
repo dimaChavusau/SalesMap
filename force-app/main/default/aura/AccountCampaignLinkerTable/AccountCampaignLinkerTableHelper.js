@@ -2,17 +2,16 @@
  * Created by z003d6ye on 23.01.2019.
  */
 ({
-    convertArrayOfObjectsToCSV : function(component, helper, data) {
-        console.log("convertArrayOfObjectsToCSV called");
-        const columnDelimiter = ';';
-        const lineDelimiter = '\n';
+    convertArrayOfObjectsToCSV: function(component, helper, data) {
+        var columnDelimiter = ';';
+        var lineDelimiter = '\n';
         
-        const keys = Array(
+        var keys = [
             "Id",
             "Name",
             "Address",
             "Phone",
-        	"Account_Status_only_Status__c",
+            "Account_Status_only_Status__c",
             "BillingLatitude",
             "BillingLongitude",
             "Distribution_Channel_Color__c",
@@ -31,29 +30,64 @@
             "Share_of_Wallet_Category_Icon__c",
             "Share_of_Wallet_Category__c",
             "is_Main_Account__c"
-        );
-        let csv = '';
+        ];
+        
+        var csv = '';
         
         // Adding column headers
         csv += keys.join(columnDelimiter);
         csv += lineDelimiter;
         
         // Adding values
-        data.forEach(item => {
-            csv += keys.map(key => {
-            	let val = item[key];
-            	if(key === "Phone") {
-            		val = "P: "+val
+        data.forEach(function(item) {
+            var row = keys.map(function(key) {
+                var val = item[key] || '';
+                
+                if (key === "Phone") {
+                    val = "P: " + val;
                 }
-            	return val;
-        	}).join(columnDelimiter).replaceAll("\r\n", " ").replaceAll("\n", " ");
-            csv += lineDelimiter;
+                if (key === "Last_Sales_Visit_URL__c" || 
+                    key === "Last_Training_Event_URL__c" || 
+                    key === "Next_Planned_Training_Event_URL__c" || 
+                    key === "Planned_Next_Sales_Visit_URL__c") {
+                    
+                    // Check if value contains anchor tag
+                    if (val && val.indexOf('<a href=') > -1) {
+                        var startIndex = val.indexOf('>') + 1;
+                        var endIndex = val.indexOf('</a>');
+                        if (startIndex > 0 && endIndex > -1) {
+                            val = val.substring(startIndex, endIndex);
+                        }
+                    }
+                }
+                
+                // Convert to string and clean up newlines
+                val = String(val);
+                val = val.split('\r\n').join(' ');
+                val = val.split('\n').join(' ');
+                
+                // Escape double quotes
+                val = val.split('"').join('""');
+                
+                // Wrap in quotes if necessary
+                if (val.indexOf(columnDelimiter) > -1 || val.indexOf('"') > -1) {
+                    val = '"' + val + '"';
+                }
+                
+                return val;
+            }).join(columnDelimiter);
+            
+            csv += row + lineDelimiter;
         });
+        
+        // Add UTF-8 BOM at the beginning
+        csv = String.fromCharCode(65279) + csv;
+        
         return csv;
-    }, 
+    },
 
-    downloadCSV : function(component, helper, csv) {
-        const filename = 'accounts.csv';
+    downloadCSV: function(component, helper, csv) {
+        var filename = 'accounts.csv';
         
         try {
             var action = component.get("c.uploadCSVFile");
@@ -61,35 +95,36 @@
                 "csvContent": csv,
                 "fileName": filename
             });
-    
+
             action.setCallback(this, function(response) {
                 var state = response.getState();
                 console.log("response", response);
+                
                 if (state === "SUCCESS") {
-                    // Handle success, e.g., display the Id of the created file
                     var fileId = response.getReturnValue();
                     console.log("File Id: " + fileId);
 
-                    if($A.get("$Browser.formFactor") === "PHONE") {
+                    if ($A.get("$Browser.formFactor") === "PHONE") {
                         var urlEvent = $A.get("e.force:navigateToURL");
                         urlEvent.setParams({
-                            "url": "/"+fileId
+                            "url": "/" + fileId
                         });
                         urlEvent.fire();
                     } else {
-                        window.open('/sfc/servlet.shepherd/document/download/'+fileId+'?operationContext=S1', '_blank');
+                        window.open('/sfc/servlet.shepherd/document/download/' + fileId + '?operationContext=S1', '_blank');
                     }
                 } else {
-                    // Handle errors
                     console.error("Error: " + state);
+                    var errors = response.getError();
+                    if (errors && errors[0] && errors[0].message) {
+                        console.error("Error message: " + errors[0].message);
+                    }
                 }
             });
-    
-            $A.enqueueAction(action);
-        } catch(ex) {
-            console.error(ex)
-        }
 
-        
+            $A.enqueueAction(action);
+        } catch (ex) {
+            console.error(ex);
+        }
     }
 })
