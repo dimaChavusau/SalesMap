@@ -95,8 +95,12 @@ export default class SalesMapContainerLwc extends LightningElement {
     @track initialFilterData = {};
     @track hiddenByLegend = new Set();
     @track _allMapMarkers = [];
-    boundResizeHandler;
     
+    filterDebounceTimeout;
+    isFilteringInProgress = false;
+    skipMapFitting = false;
+    boundResizeHandler;
+    isAdmin = false;
     selectedMarkerValue;
     zoomLevel = 10;
     mapCenter = { location: { Latitude: 37.7749, Longitude: -122.4194 }};
@@ -195,6 +199,7 @@ export default class SalesMapContainerLwc extends LightningElement {
             this.currentUser = user;
             this.userAffiliateCode = user.Affiliate_Code_from_Affiliate__c;
             this.userFunction = user.Sivantos_Department_del__c;
+            this.isAdmin = user.Profile.PermissionsModifyAllData; // Add this line
             
             const validCodes = ['AS-DE', 'S-DE-AD', 'S-DE-AVL', 'S-DE-CEWS', 'W-DE'];
             this.showMerchantStatusFilter = validCodes.includes(this.userAffiliateCode);
@@ -433,11 +438,13 @@ export default class SalesMapContainerLwc extends LightningElement {
                 return marker;
             });
         
-        // Apply filters first to get visible markers
-        this.applyFilters();
+        // Apply filters
+        this.applyFiltersOptimized();
         
-        // Fit map to show all visible markers
-        this.fitMapToMarkers(this.mapMarkers);
+        // Only fit map on initial load or search
+        if (!this.skipMapFitting && this.mapMarkers.length > 0) {
+            this.fitMapToMarkers(this.mapMarkers);
+        }
         
         // Update legend
         this.updateLegend();
@@ -482,22 +489,8 @@ export default class SalesMapContainerLwc extends LightningElement {
     }
 
     applyFilters() {
-        const accountField = FIELD_MAPPINGS[this.selectedView];
-        
-        this.mapMarkers = this._allMapMarkers.filter(marker => {
-            if (accountField && this.hiddenByLegend.size > 0) {
-                const fieldValue = this.getNestedFieldValue(marker.account, accountField);
-                return !this.hiddenByLegend.has(fieldValue || 'blue');
-            }
-            return true;
-        });
-        
-        // After filtering, adjust map to show remaining markers
-        if (this.mapMarkers.length > 0) {
-            this.fitMapToMarkers(this.mapMarkers);
-        }
-        
-        this.updateDisplayedAccounts();
+        // Redirect to optimized version
+        this.applyFiltersOptimized();
     }
 
     // Unified legend builder
@@ -764,13 +757,108 @@ export default class SalesMapContainerLwc extends LightningElement {
     handleLegendItemToggle(event) {
         const { iconValue, crossed } = event.detail;
         
+        // Update hidden set immediately for responsive UI
         if (crossed) {
             this.hiddenByLegend.add(iconValue);
         } else {
             this.hiddenByLegend.delete(iconValue);
         }
         
-        this.applyFilters();
+        // Skip map fitting for legend toggles (keep current view)
+        this.skipMapFitting = true;
+        
+        // Debounce the heavy filtering operation
+        if (this.filterDebounceTimeout) {
+            clearTimeout(this.filterDebounceTimeout);
+        }
+        
+        this.filterDebounceTimeout = setTimeout(() => {
+            this.applyFiltersOptimized();
+            this.skipMapFitting = false;
+        }, 100); // 100ms debounce
+    }
+
+    applyFiltersOptimized() {
+        if (this.isFilteringInProgress) return;
+        
+        const accountField = FIELD_MAPPINGS[this.selectedView];
+        
+        if (!accountField || this.hiddenByLegend.size === 0) {
+            // No filtering needed - show all
+            this.mapMarkers = [...this._allMapMarkers];
+            this.updateDisplayedAccountsOptimized();
+            return;
+        }
+        
+        this.isFilteringInProgress = true;
+        
+        // Use requestAnimationFrame for non-blocking filtering
+        requestAnimationFrame(() => {
+            this.batchFilterMarkers(accountField);
+        });
+    }
+
+    batchFilterMarkers(accountField) {
+        const BATCH_SIZE = 100; // Process 100 markers at a time
+        const allMarkers = this._allMapMarkers;
+        const filtered = [];
+        let index = 0;
+        
+        const processBatch = () => {
+            const endIndex = Math.min(index + BATCH_SIZE, allMarkers.length);
+            
+            for (let i = index; i < endIndex; i++) {
+                const marker = allMarkers[i];
+                if (marker) {
+                    const fieldValue = this.getNestedFieldValue(marker.account, accountField);
+                    if (!this.hiddenByLegend.has(fieldValue || 'blue')) {
+                        filtered.push(marker);
+                    }
+                }
+            }
+            
+            index = endIndex;
+            
+            if (index < allMarkers.length) {
+                // More batches to process
+                requestAnimationFrame(processBatch);
+            } else {
+                // All done - update in one go
+                this.mapMarkers = filtered;
+                this.updateDisplayedAccountsOptimized();
+                this.isFilteringInProgress = false;
+            }
+        };
+        
+        processBatch();
+    }
+
+    updateDisplayedAccountsOptimized() {
+        const accountField = FIELD_MAPPINGS[this.selectedView];
+        
+        if (!accountField || this.hiddenByLegend.size === 0) {
+            // No filtering - show all accounts
+            this.displayedAccounts = this.accounts.map(acc => ({
+                ...acc,
+                FormattedAddress: this.formatAddress(acc),
+                TerritoryName: acc.Territory__r?.Name || ''
+            }));
+            return;
+        }
+        
+        // Create Set of visible account IDs for O(1) lookup
+        const visibleAccountIds = new Set(
+            this.mapMarkers.map(m => m.account.Id)
+        );
+        
+        // Filter accounts using Set lookup (much faster)
+        this.displayedAccounts = this.accounts
+            .filter(acc => visibleAccountIds.has(acc.Id))
+            .map(acc => ({
+                ...acc,
+                FormattedAddress: this.formatAddress(acc),
+                TerritoryName: acc.Territory__r?.Name || ''
+            }));
     }
 
     handleTableSearch(event) {
@@ -797,10 +885,31 @@ export default class SalesMapContainerLwc extends LightningElement {
         }
     }
 
-    fitMapToMarkers() {
-        if (this.mapMarkers.length > 0) {
-            this.mapCenter = this.calculateCenter(this.mapMarkers);
-            this.zoomLevel = this.calculateZoomLevel(this.mapMarkers);
+    fitMapToMarkers(markers) {
+        // Skip if flag is set (e.g., during legend toggle)
+        if (this.skipMapFitting) {
+            return;
+        }
+        
+        if (!markers || markers.length === 0) {
+            return;
+        }
+        
+        // Single marker - center on it with high zoom
+        if (markers.length === 1) {
+            this.mapCenter = { location: markers[0].location };
+            this.zoomLevel = 15;
+            return;
+        }
+        
+        // Multiple markers - calculate bounds
+        const bounds = this.calculateBounds(markers);
+        this.mapCenter = this.getCenterFromBounds(bounds);
+        this.zoomLevel = this.getZoomForBounds(bounds);
+        
+        // Add small padding to zoom out slightly
+        if (this.zoomLevel > 1) {
+            this.zoomLevel = this.zoomLevel - 1;
         }
     }
 
@@ -948,6 +1057,7 @@ export default class SalesMapContainerLwc extends LightningElement {
     }
 
     handleFitMapToMarkers() {
+        this.skipMapFitting = false; // Explicitly allow fitting
         if (this.mapMarkers && this.mapMarkers.length > 0) {
             this.fitMapToMarkers(this.mapMarkers);
         }

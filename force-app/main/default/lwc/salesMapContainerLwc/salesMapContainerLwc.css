@@ -94,3 +94,15 @@ lightning-card {
     font-weight: 700;
     line-height: 1.25;
 }
+
+/* Improve rendering performance */
+lightning-map {
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+}
+
+/* Optimize legend transitions */
+c-sales-map-legend {
+    will-change: opacity;
+}

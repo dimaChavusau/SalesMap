@@ -48,12 +48,15 @@
                 </lightning-input>
             </div>
             
-            <!-- Filters Accordion -->
+            <!-- Filters Accordion - All sections open by default -->
             <lightning-accordion active-section-name={activeSections} 
                                allow-multiple-sections-open>
                 
                 <!-- Search Section -->
                 <lightning-accordion-section name="search" label="Search">
+                    <span slot="icon">
+                        <lightning-icon icon-name="utility:search" size="x-small"></lightning-icon>
+                    </span>
                     <lightning-input 
                         type="search" 
                         placeholder="Search accounts..." 
@@ -65,6 +68,9 @@
                 
                 <!-- Location Section -->
                 <lightning-accordion-section name="location" label="Location">
+                    <span slot="icon">
+                        <lightning-icon icon-name="utility:location" size="x-small"></lightning-icon>
+                    </span>
                     <c-location-search-input-lwc
                         search-value={location}
                         onselectlocation={handleLocationSelect}>
@@ -93,6 +99,9 @@
                 
                 <!-- Territories Section -->
                 <lightning-accordion-section name="territories" label="Territories">
+                    <span slot="icon">
+                        <lightning-icon icon-name="standard:service_territory" size="x-small"></lightning-icon>
+                    </span>
                     <c-multi-select-lookup-lwc
                         object-api-name="Territory__c"
                         placeholder="Search territories..."
@@ -106,6 +115,9 @@
                 
                 <!-- Trainers Section -->
                 <lightning-accordion-section name="trainers" label="Trainers">
+                    <span slot="icon">
+                        <lightning-icon icon-name="standard:user" size="x-small"></lightning-icon>
+                    </span>
                     <c-multi-select-lookup-lwc
                         object-api-name="User"
                         placeholder="Search trainers..."
@@ -118,6 +130,9 @@
                 
                 <!-- Campaigns Section -->
                 <lightning-accordion-section name="campaigns" label="Campaigns">
+                    <span slot="icon">
+                        <lightning-icon icon-name="standard:campaign" size="x-small"></lightning-icon>
+                    </span>
                     <c-multi-select-lookup-lwc
                         object-api-name="Campaign"
                         placeholder="Search campaigns..."
@@ -130,6 +145,9 @@
                 <!-- Brands Section (US Only) -->
                 <template if:true={showBrands}>
                     <lightning-accordion-section name="brands" label="Brands">
+                        <span slot="icon">
+                            <lightning-icon icon-name="utility:tag" size="x-small"></lightning-icon>
+                        </span>
                         <lightning-dual-listbox
                             name="brands"
                             source-label="Available"
@@ -144,6 +162,9 @@
                 
                 <!-- Legal Hierarchies Section -->
                 <lightning-accordion-section name="legalHierarchies" label="Legal Hierarchies">
+                    <span slot="icon">
+                        <lightning-icon icon-name="standard:hierarchy" size="x-small"></lightning-icon>
+                    </span>
                     <lightning-dual-listbox
                         name="legalHierarchies"
                         source-label="Available"
@@ -157,6 +178,9 @@
                 
                 <!-- Business Hierarchies Section -->
                 <lightning-accordion-section name="businessHierarchies" label="Business Hierarchies">
+                    <span slot="icon">
+                        <lightning-icon icon-name="standard:record" size="x-small"></lightning-icon>
+                    </span>
                     <lightning-dual-listbox
                         name="businessHierarchies"
                         source-label="Available"
@@ -170,6 +194,9 @@
                 
                 <!-- Distribution Channel Section -->
                 <lightning-accordion-section name="distributionChannel" label="Distribution Channel">
+                    <span slot="icon">
+                        <lightning-icon icon-name="utility:layers" size="x-small"></lightning-icon>
+                    </span>
                     <lightning-dual-listbox
                         name="distributionChannel"
                         source-label="Available"
@@ -183,6 +210,9 @@
                 
                 <!-- Account Status Section -->
                 <lightning-accordion-section name="accountStatus" label="Account Status">
+                    <span slot="icon">
+                        <lightning-icon icon-name="utility:info" size="x-small"></lightning-icon>
+                    </span>
                     <lightning-dual-listbox
                         name="accountStatus"
                         source-label="Available"
@@ -197,6 +227,9 @@
                 <!-- Merchant Status Section (Germany Only) -->
                 <template if:true={showMerchantStatusFilter}>
                     <lightning-accordion-section name="merchantStatus" label="Merchant Status">
+                        <span slot="icon">
+                            <lightning-icon icon-name="utility:rating" size="x-small"></lightning-icon>
+                        </span>
                         <lightning-dual-listbox
                             name="merchantStatus"
                             source-label="Available"
@@ -211,6 +244,9 @@
                 
                 <!-- Visits & Trainings Section -->
                 <lightning-accordion-section name="visitsTrainings" label="Visits & Trainings">
+                    <span slot="icon">
+                        <lightning-icon icon-name="utility:event" size="x-small"></lightning-icon>
+                    </span>
                     <div class="slds-m-bottom_small">
                         <lightning-input
                             type="checkbox"

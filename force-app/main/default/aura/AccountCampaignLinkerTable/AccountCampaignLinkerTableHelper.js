@@ -3,7 +3,7 @@
  */
 ({
     convertArrayOfObjectsToCSV: function(component, helper, data) {
-        var columnDelimiter = ';';
+        var columnDelimiter = ',';  // Use comma - Excel's default
         var lineDelimiter = '\n';
         
         var keys = [
@@ -32,7 +32,8 @@
             "is_Main_Account__c"
         ];
         
-        var csv = '';
+        // Start with UTF-8 BOM (no sep directive needed for comma)
+        var csv = '\uFEFF';
         
         // Adding column headers
         csv += keys.join(columnDelimiter);
@@ -69,8 +70,8 @@
                 // Escape double quotes
                 val = val.split('"').join('""');
                 
-                // Wrap in quotes if necessary
-                if (val.indexOf(columnDelimiter) > -1 || val.indexOf('"') > -1) {
+                // Wrap in quotes if necessary (or always wrap to be safe)
+                if (val.indexOf(columnDelimiter) > -1 || val.indexOf('"') > -1 || val.indexOf('\n') > -1) {
                     val = '"' + val + '"';
                 }
                 
@@ -79,9 +80,6 @@
             
             csv += row + lineDelimiter;
         });
-        
-        // Add UTF-8 BOM at the beginning
-        csv = String.fromCharCode(65279) + csv;
         
         return csv;
     },

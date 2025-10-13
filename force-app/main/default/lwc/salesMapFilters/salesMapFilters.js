@@ -1,9 +1,10 @@
-// salesMapFilters.js (same as before, no changes needed)
+// salesMapFilters.js
 import { LightningElement, api, track } from 'lwc';
 
 export default class SalesMapFilters extends LightningElement {
     @api userAffiliateCode;
     @api showMerchantStatusFilter = false;
+    @api isAdmin = false; // Add this to receive admin status from parent
     
     @api 
     get initialFilterData() {
@@ -13,18 +14,6 @@ export default class SalesMapFilters extends LightningElement {
         this._initialFilterData = value;
         if (value && value.distributionChannels) {
             this.distributionChannelOptions = value.distributionChannels;
-        }
-        if (value && value.legalHierarchies) {
-            this.legalHierarchyOptions = value.legalHierarchies.map(h => ({
-                label: h.Name,
-                value: h.Id
-            }));
-        }
-        if (value && value.businessHierarchies) {
-            this.businessHierarchyOptions = value.businessHierarchies.map(h => ({
-                label: h.Name,
-                value: h.Id
-            }));
         }
     }
     
@@ -56,19 +45,14 @@ export default class SalesMapFilters extends LightningElement {
     @track selectedBrands = [];
     @track selectedLegalHierarchies = [];
     @track selectedBusinessHierarchies = [];
-    @track selectedLegalHierarchyIds = [];
-    @track selectedBusinessHierarchyIds = [];
     @track selectedDistributionChannels = [];
     @track selectedAccountStatus = ['Active Account'];
     @track selectedMerchantStatus = ['All'];
     @track salesTargetFilter = '';
-    @track activeSections = ['search', 'location', 'territories'];
+    @track activeSections = ['search', 'location', 'territories', 'trainers', 'campaigns'];
     
     _initialFilterData = {};
     _preSelectedFilters = {};
-    
-    legalHierarchyOptions = [];
-    businessHierarchyOptions = [];
     
     unitOptions = [
         { label: 'km', value: 'km' },
@@ -116,7 +100,9 @@ export default class SalesMapFilters extends LightningElement {
     ];
     
     get showBrands() {
-        return this.userAffiliateCode === 'W-US' || 
+        // Show brands filter for US affiliates OR admins
+        return this.isAdmin || 
+               this.userAffiliateCode === 'W-US' || 
                this.userAffiliateCode === 'S-US';
     }
     
@@ -171,17 +157,13 @@ export default class SalesMapFilters extends LightningElement {
     }
     
     handleLegalHierarchyChange(event) {
-        this.selectedLegalHierarchyIds = event.detail.value;
-        this.selectedLegalHierarchies = this._initialFilterData.legalHierarchies.filter(
-            h => this.selectedLegalHierarchyIds.includes(h.Id)
-        );
+        // Now receives array of records from multi-select lookup
+        this.selectedLegalHierarchies = event.detail.selectedRecords;
     }
     
     handleBusinessHierarchyChange(event) {
-        this.selectedBusinessHierarchyIds = event.detail.value;
-        this.selectedBusinessHierarchies = this._initialFilterData.businessHierarchies.filter(
-            h => this.selectedBusinessHierarchyIds.includes(h.Id)
-        );
+        // Now receives array of records from multi-select lookup
+        this.selectedBusinessHierarchies = event.detail.selectedRecords;
     }
     
     handleDistributionChannelChange(event) {
@@ -243,8 +225,6 @@ export default class SalesMapFilters extends LightningElement {
         this.selectedBrands = [];
         this.selectedLegalHierarchies = [];
         this.selectedBusinessHierarchies = [];
-        this.selectedLegalHierarchyIds = [];
-        this.selectedBusinessHierarchyIds = [];
         this.selectedDistributionChannels = [];
         this.selectedAccountStatus = ['Active Account'];
         this.selectedMerchantStatus = ['All'];

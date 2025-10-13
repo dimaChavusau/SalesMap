@@ -2,3 +2,27 @@
 .slds-accordion__section {
     border-top: 1px solid #dddbda;
 }
+
+/* Match original styling */
+.slds-accordion__summary {
+    padding: 0.75rem 1rem;
+}
+
+.slds-accordion__summary-heading {
+    font-weight: 600;
+}
+
+/* Ensure icons are visible */
+lightning-icon {
+    margin-right: 0.5rem;
+}
+
+/* Dual listbox styling */
+lightning-dual-listbox {
+    margin-top: 0.5rem;
+}
+
+/* Form elements spacing */
+.slds-form-element {
+    margin-bottom: 0.75rem;
+}
