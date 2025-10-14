@@ -96,6 +96,7 @@ export default class SalesMapContainerLwc extends LightningElement {
     @track hiddenByLegend = new Set();
     @track _allMapMarkers = [];
     
+    viewChangeTimeout;
     filterDebounceTimeout;
     isFilteringInProgress = false;
     skipMapFitting = false;
@@ -416,6 +417,8 @@ export default class SalesMapContainerLwc extends LightningElement {
     }
 
     buildMapMarkers() {
+        console.log('Building map markers from scratch');
+        
         this._allMapMarkers = this.accounts
             .filter(acc => acc.BillingLatitude && acc.BillingLongitude)
             .map((acc) => {
@@ -681,13 +684,57 @@ export default class SalesMapContainerLwc extends LightningElement {
     }
 
     handleViewChange(event) {
-        this.selectedView = event.detail.value;
-        this.hiddenByLegend.clear();
+        const newView = event.detail.value;
         
+        if (this.viewChangeTimeout) {
+            clearTimeout(this.viewChangeTimeout);
+        }
+        
+        // Show subtle loading indicator
         const legendComponent = this.template.querySelector('c-sales-map-legend');
-        if (legendComponent) legendComponent.reset();
+        if (legendComponent) {
+            legendComponent.classList.add('updating');
+        }
         
-        this.buildMapMarkers();
+        this.viewChangeTimeout = setTimeout(() => {
+            this.selectedView = newView;
+            this.hiddenByLegend.clear();
+            
+            if (legendComponent) legendComponent.reset();
+            
+            this.updateMarkerColors();
+            
+            // Remove loading indicator
+            if (legendComponent) {
+                legendComponent.classList.remove('updating');
+            }
+        }, 100);
+    }
+
+    updateMarkerColors() {
+        console.time('updateMarkerColors');
+        
+        // Use requestAnimationFrame for non-blocking update
+        requestAnimationFrame(() => {
+            // Batch update all markers
+            const updatedMarkers = this._allMapMarkers.map(marker => ({
+                ...marker,
+                mapIcon: {
+                    ...marker.mapIcon,
+                    fillColor: this.getMarkerColor(marker.account)
+                }
+            }));
+            
+            // Single assignment to trigger one render
+            this._allMapMarkers = updatedMarkers;
+            this.mapMarkers = [...updatedMarkers];
+            
+            // Update legend in next frame
+            requestAnimationFrame(() => {
+                this.updateLegend();
+                console.timeEnd('updateMarkerColors');
+            });
+        });
     }
 
     handleMarkerSelect(event) {
