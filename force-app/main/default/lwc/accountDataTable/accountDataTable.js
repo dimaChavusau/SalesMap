@@ -1,3 +1,4 @@
+// force-app/main/default/lwc/accountDataTable/accountDataTable.js
 import { LightningElement, api, track } from 'lwc';
 
 export default class AccountDataTable extends LightningElement {
@@ -122,11 +123,44 @@ export default class AccountDataTable extends LightningElement {
         }
     }
     
+    downloadCSV(csv) {
+        const filename = 'accounts.csv';
+        
+        try {
+            // Create a hidden anchor element
+            const link = document.createElement('a');
+            
+            // Use data URI with proper encoding
+            // UTF-8 BOM is already in the CSV string
+            const dataUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+            
+            link.setAttribute('href', dataUri);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            link.style.position = 'absolute';
+            link.style.left = '-9999px';
+            
+            // Append to body, click, and remove
+            document.body.appendChild(link);
+            
+            console.log('Triggering download...');
+            link.click();
+            
+            // Cleanup after a short delay
+            setTimeout(() => {
+                document.body.removeChild(link);
+                console.log('Download cleanup complete');
+            }, 100);
+            
+        } catch (error) {
+            console.error('Download error:', error);
+        }
+    }
+    
     convertToCSV() {
-        const columnDelimiter = ';';
+        const columnDelimiter = ',';
         const lineDelimiter = '\n';
         
-        // Match exact field list from legacy implementation
         const keys = [
             'Id',
             'Name',
@@ -153,7 +187,8 @@ export default class AccountDataTable extends LightningElement {
             'is_Main_Account__c'
         ];
         
-        let csv = '';
+        // Start with UTF-8 BOM
+        let csv = '\uFEFF';
         
         // Add column headers
         csv += keys.join(columnDelimiter);
@@ -161,14 +196,12 @@ export default class AccountDataTable extends LightningElement {
         
         console.log('Processing', this.filteredData.length, 'records for CSV');
         
-        // Add data rows - use filteredData to match table display
-        this.filteredData.forEach((item, index) => {
+        // Add data rows
+        this.filteredData.forEach((item) => {
             const row = keys.map(key => {
                 let val = '';
                 
-                // Get value based on key
                 if (key === 'Address') {
-                    // Build address from BillingAddress object
                     if (item.BillingAddress) {
                         const addr = item.BillingAddress;
                         val = `${addr.street || ''}, ${addr.postalCode || ''} ${addr.city || ''}, ${addr.country || ''}`.trim();
@@ -179,12 +212,10 @@ export default class AccountDataTable extends LightningElement {
                     val = item[key] || '';
                 }
                 
-                // Special handling for Phone field
                 if (key === 'Phone' && val) {
                     val = 'P: ' + val;
                 }
                 
-                // Extract text from HTML anchor tags for URL fields
                 if (key === 'Last_Sales_Visit_URL__c' || 
                     key === 'Last_Training_Event_URL__c' || 
                     key === 'Next_Planned_Training_Event_URL__c' || 
@@ -199,17 +230,11 @@ export default class AccountDataTable extends LightningElement {
                     }
                 }
                 
-                // Convert to string and clean up
                 val = String(val);
-                
-                // Remove newlines
                 val = val.replace(/\r\n/g, ' ').replace(/\n/g, ' ');
-                
-                // Escape double quotes
                 val = val.replace(/"/g, '""');
                 
-                // Wrap in quotes if contains delimiter or quotes
-                if (val.indexOf(columnDelimiter) > -1 || val.indexOf('"') > -1) {
+                if (val.indexOf(columnDelimiter) > -1 || val.indexOf('"') > -1 || val.indexOf('\n') > -1) {
                     val = '"' + val + '"';
                 }
                 
@@ -219,67 +244,6 @@ export default class AccountDataTable extends LightningElement {
             csv += row + lineDelimiter;
         });
         
-        // Add UTF-8 BOM at the beginning
-        csv = '\uFEFF' + csv;
-        
         return csv;
-    }
-    
-    downloadCSV(csv) {
-        console.log('Starting download...');
-        
-        const filename = 'accounts.csv';
-        
-        try {
-            // Method 1: Try using Blob (preferred method)
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            
-            if (navigator.msSaveBlob) {
-                // IE 10+
-                console.log('Using IE download method');
-                navigator.msSaveBlob(blob, filename);
-            } else {
-                // Modern browsers
-                console.log('Using modern browser download method');
-                const link = document.createElement('a');
-                
-                if (link.download !== undefined) {
-                    const url = URL.createObjectURL(blob);
-                    link.setAttribute('href', url);
-                    link.setAttribute('download', filename);
-                    link.style.visibility = 'hidden';
-                    link.style.position = 'absolute';
-                    link.style.left = '-9999px';
-                    
-                    document.body.appendChild(link);
-                    
-                    console.log('Triggering download...');
-                    link.click();
-                    
-                    // Cleanup
-                    setTimeout(() => {
-                        document.body.removeChild(link);
-                        URL.revokeObjectURL(url);
-                        console.log('Download cleanup complete');
-                    }, 100);
-                } else {
-                    // Fallback for older browsers
-                    console.log('Using fallback data URI method');
-                    const dataUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-                    window.open(dataUri, '_blank');
-                }
-            }
-        } catch (error) {
-            console.error('Download error:', error);
-            // Final fallback
-            console.log('Attempting final fallback method');
-            const dataUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-            const link = document.createElement('a');
-            link.href = dataUri;
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
     }
 }
